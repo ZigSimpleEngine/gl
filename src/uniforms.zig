@@ -50,7 +50,8 @@ pub const UniformParameter = enum(u32) {
 /// A parameter of a uniform block read via
 /// [`getActiveUniformBlock`](getActiveUniformBlock).
 pub const UniformBlockParameter = enum(u32) {
-    /// Binding point of the block ([`boolean`], `GL_UNIFORM_BLOCK_BINDING`).
+    /// Index of the uniform buffer binding point last selected for the
+    /// block, or zero if none (`GL_UNIFORM_BLOCK_BINDING`).
     uniform_block_binding = 0x8A3F,
 
     /// Size of the block data in bytes (`GL_UNIFORM_BLOCK_DATA_SIZE`).

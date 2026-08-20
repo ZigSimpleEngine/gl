@@ -4,7 +4,7 @@
 //! ES 3.0 API (compatible with WebGL 2). All functions are grouped into
 //! object-oriented namespaces by their meaning;
 //!
-//! # Primer
+//! # Example
 //!
 //! 1. Obtain a loader function that resolves OpenGL function addresses by
 //!    name (platform-dependent, e.g. `eglGetProcAddress` on Android or

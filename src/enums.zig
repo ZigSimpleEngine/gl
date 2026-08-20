@@ -97,23 +97,28 @@ pub const Comparison = enum(u32) {
     /// Never passes (`GL_NEVER`).
     never = 0x0200,
 
-    /// Passes if the operands are equal (`GL_LESS`).
+    /// Passes if the reference value is less than the stored value
+    /// (`GL_LESS`).
     less = 0x0201,
 
-    /// Passes if the operand is less than or equal (`GL_EQUAL`).
+    /// Passes if the reference value is equal to the stored value
+    /// (`GL_EQUAL`).
     equal = 0x0202,
 
-    /// Passes if the operand is less than or equal to the reference
-    /// (`GL_LEQUAL`).
+    /// Passes if the reference value is less than or equal to the stored
+    /// value (`GL_LEQUAL`).
     lequal = 0x0203,
 
-    /// Passes if the operand is greater (`GL_GREATER`).
+    /// Passes if the reference value is greater than the stored value
+    /// (`GL_GREATER`).
     greater = 0x0204,
 
-    /// Passes if the operand is not equal (`GL_NOTEQUAL`).
+    /// Passes if the reference value is not equal to the stored value
+    /// (`GL_NOTEQUAL`).
     not_equal = 0x0205,
 
-    /// Passes if the operand is greater than or equal (`GL_GEQUAL`).
+    /// Passes if the reference value is greater than or equal to the stored
+    /// value (`GL_GEQUAL`).
     gequal = 0x0206,
 
     /// Always passes (`GL_ALWAYS`).

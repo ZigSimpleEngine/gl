@@ -110,8 +110,8 @@ pub const GetPName = enum(u32) {
     /// Range of supported point sizes ([`float`], `GL_ALIASED_POINT_SIZE_RANGE`).
     aliased_point_size_range = 0x846D,
 
-    /// Number of bits per alpha component in the default framebuffer
-    /// (`GL_ALPHA_BITS`).
+    /// Number of alpha bitplanes in the color buffer of the currently bound
+    /// draw framebuffer (`GL_ALPHA_BITS`).
     alpha_bits = 0x0D55,
 
     /// Name of the buffer bound to `GL_ARRAY_BUFFER` (`GL_ARRAY_BUFFER_BINDING`).
@@ -144,8 +144,8 @@ pub const GetPName = enum(u32) {
     /// Source RGB blend factor of the RGB components (`GL_BLEND_SRC_RGB`).
     blend_src_rgb = 0x80C9,
 
-    /// Number of bits per blue component in the default framebuffer
-    /// (`GL_BLUE_BITS`).
+    /// Number of blue bitplanes in the color buffer of the currently bound
+    /// draw framebuffer (`GL_BLUE_BITS`).
     blue_bits = 0x0D54,
 
     /// Color used by [`clear.clear`](clear.clear)
@@ -175,8 +175,8 @@ pub const GetPName = enum(u32) {
     /// ([`float`] ×4, `GL_CURRENT_VERTEX_ATTRIB`).
     current_vertex_attrib = 0x8626,
 
-    /// Number of bits per depth component in the default framebuffer
-    /// (`GL_DEPTH_BITS`).
+    /// Number of bitplanes in the depth buffer of the currently bound
+    /// framebuffer (`GL_DEPTH_BITS`).
     depth_bits = 0x0D56,
 
     /// Value used by [`clear.clear`](clear.clear) for the depth buffer
@@ -199,53 +199,53 @@ pub const GetPName = enum(u32) {
     /// Whether dithering is enabled (`bool`, `GL_DITHER`).
     dither = 0x0BD0,
 
-    /// Draw buffer of the i-th color output (see [`drawBuffers`](state.drawBuffers),
-    /// `GL_DRAW_BUFFER0`).
+    /// Destination buffer of fragment output 0 (see
+    /// [`drawBuffers`](state.drawBuffers), `GL_DRAW_BUFFER0`).
     draw_buffer0 = 0x8825,
 
-    /// Draw buffer of the 1st color output (`GL_DRAW_BUFFER1`).
+    /// Destination buffer of fragment output 1 (`GL_DRAW_BUFFER1`).
     draw_buffer1 = 0x8826,
 
-    /// Draw buffer of the 2nd color output (`GL_DRAW_BUFFER2`).
+    /// Destination buffer of fragment output 2 (`GL_DRAW_BUFFER2`).
     draw_buffer2 = 0x8827,
 
-    /// Draw buffer of the 3rd color output (`GL_DRAW_BUFFER3`).
+    /// Destination buffer of fragment output 3 (`GL_DRAW_BUFFER3`).
     draw_buffer3 = 0x8828,
 
-    /// Draw buffer of the 4th color output (`GL_DRAW_BUFFER4`).
+    /// Destination buffer of fragment output 4 (`GL_DRAW_BUFFER4`).
     draw_buffer4 = 0x8829,
 
-    /// Draw buffer of the 5th color output (`GL_DRAW_BUFFER5`).
+    /// Destination buffer of fragment output 5 (`GL_DRAW_BUFFER5`).
     draw_buffer5 = 0x882A,
 
-    /// Draw buffer of the 6th color output (`GL_DRAW_BUFFER6`).
+    /// Destination buffer of fragment output 6 (`GL_DRAW_BUFFER6`).
     draw_buffer6 = 0x882B,
 
-    /// Draw buffer of the 7th color output (`GL_DRAW_BUFFER7`).
+    /// Destination buffer of fragment output 7 (`GL_DRAW_BUFFER7`).
     draw_buffer7 = 0x882C,
 
-    /// Draw buffer of the 8th color output (`GL_DRAW_BUFFER8`).
+    /// Destination buffer of fragment output 8 (`GL_DRAW_BUFFER8`).
     draw_buffer8 = 0x882D,
 
-    /// Draw buffer of the 9th color output (`GL_DRAW_BUFFER9`).
+    /// Destination buffer of fragment output 9 (`GL_DRAW_BUFFER9`).
     draw_buffer9 = 0x882E,
 
-    /// Draw buffer of the 10th color output (`GL_DRAW_BUFFER10`).
+    /// Destination buffer of fragment output 10 (`GL_DRAW_BUFFER10`).
     draw_buffer10 = 0x882F,
 
-    /// Draw buffer of the 11th color output (`GL_DRAW_BUFFER11`).
+    /// Destination buffer of fragment output 11 (`GL_DRAW_BUFFER11`).
     draw_buffer11 = 0x8830,
 
-    /// Draw buffer of the 12th color output (`GL_DRAW_BUFFER12`).
+    /// Destination buffer of fragment output 12 (`GL_DRAW_BUFFER12`).
     draw_buffer12 = 0x8831,
 
-    /// Draw buffer of the 13th color output (`GL_DRAW_BUFFER13`).
+    /// Destination buffer of fragment output 13 (`GL_DRAW_BUFFER13`).
     draw_buffer13 = 0x8832,
 
-    /// Draw buffer of the 14th color output (`GL_DRAW_BUFFER14`).
+    /// Destination buffer of fragment output 14 (`GL_DRAW_BUFFER14`).
     draw_buffer14 = 0x8833,
 
-    /// Draw buffer of the 15th color output (`GL_DRAW_BUFFER15`).
+    /// Destination buffer of fragment output 15 (`GL_DRAW_BUFFER15`).
     draw_buffer15 = 0x8834,
 
     /// Name of the buffer bound to `GL_ELEMENT_ARRAY_BUFFER`
@@ -263,8 +263,8 @@ pub const GetPName = enum(u32) {
     /// Mipmap generation hint (`GL_GENERATE_MIPMAP_HINT`).
     generate_mipmap_hint = 0x8192,
 
-    /// Number of bits per green component in the default framebuffer
-    /// (`GL_GREEN_BITS`).
+    /// Number of green bitplanes in the color buffer of the currently bound
+    /// draw framebuffer (`GL_GREEN_BITS`).
     green_bits = 0x0D53,
 
     /// Preferred format for raw framebuffer reads (`GL_IMPLEMENTATION_COLOR_READ_FORMAT`).
@@ -464,8 +464,8 @@ pub const GetPName = enum(u32) {
     /// List of supported program binary formats (`GL_PROGRAM_BINARY_FORMATS`).
     program_binary_formats = 0x87FF,
 
-    /// Number of bits per red component in the default framebuffer
-    /// (`GL_RED_BITS`).
+    /// Number of red bitplanes in the color buffer of the currently bound
+    /// draw framebuffer (`GL_RED_BITS`).
     red_bits = 0x0D52,
 
     /// Name of the renderbuffer bound to `GL_RENDERBUFFER`
@@ -533,8 +533,8 @@ pub const GetPName = enum(u32) {
     /// Stencil write mask for the back faces (`GL_STENCIL_BACK_WRITEMASK`).
     stencil_back_writemask = 0x8CA5,
 
-    /// Number of bits per stencil component in the default framebuffer
-    /// (`GL_STENCIL_BITS`).
+    /// Number of bitplanes in the stencil buffer of the currently bound
+    /// framebuffer (`GL_STENCIL_BITS`).
     stencil_bits = 0x0D57,
 
     /// Value used by [`clear.clear`](clear.clear) for the stencil buffer

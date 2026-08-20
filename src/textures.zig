@@ -303,10 +303,14 @@ pub const TextureParameter = enum(u32) {
     /// Index of the highest mipmap level (`GL_TEXTURE_MAX_LEVEL`).
     texture_max_level = 0x813D,
 
-    /// Minimum LOD bias (`GL_TEXTURE_MIN_LOD`).
+    /// Minimum level-of-detail parameter; limits the selection of the
+    /// highest-resolution mipmap (lowest mipmap level). Initial value -1000
+    /// (`GL_TEXTURE_MIN_LOD`).
     texture_min_lod = 0x813A,
 
-    /// Maximum LOD bias (`GL_TEXTURE_MAX_LOD`).
+    /// Maximum level-of-detail parameter; limits the selection of the
+    /// lowest-resolution mipmap (highest mipmap level). Initial value 1000
+    /// (`GL_TEXTURE_MAX_LOD`).
     texture_max_lod = 0x813B,
 
     /// Swizzle of the R channel ([`Swizzle`](Swizzle), `GL_TEXTURE_SWIZZLE_R`).
