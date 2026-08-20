@@ -1,6 +1,6 @@
 .{
     .name = .gl,
-    .version = "0.0.0",
+    .version = "0.0.1",
     .fingerprint = 0x2f61c2eca2838983,
     .minimum_zig_version = "0.16.0",
 
