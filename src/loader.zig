@@ -66,6 +66,12 @@ pub const Context = struct {
     /// Whether the context supports OpenGL ES 3.0.
     es_3_0: bool = false,
 
+    /// Whether the context is a genuine OpenGL ES context. Desktop OpenGL
+    /// contexts expose the same function set from version 3.0 upward (the
+    /// full ES 3.0 entry points require desktop 4.2+), but expect desktop
+    /// GLSL `#version 3x0` shaders instead of `#version 300 es`.
+    is_es: bool = false,
+
     /// Major context version (e.g. `3` for OpenGL ES 3.2).
     major: u32 = 0,
 
@@ -848,12 +854,20 @@ pub fn load(load_fn: types.LoadFn) LoadError!void {
     // 1. First obtain glGetString — the version cannot be determined without it.
     ctx.getString = @ptrCast(load_fn("glGetString") orelse return error.GetStringUnavailable);
 
-    // 2. Determine the context version.
+    // 2. Determine the context version. Genuine ES contexts carry an
+    //    "OpenGL ES" prefix; desktop OpenGL contexts start straight with
+    //    the version number and are accepted as well.
     const version_ptr = ctx.getString(gl_version_string);
     if (version_ptr == null) return error.InvalidVersion;
-    const major_minor = try parseVersion(version_ptr.?);
-    ctx.major = major_minor.major;
-    ctx.minor = major_minor.minor;
+    if (parseVersion(version_ptr.?)) |major_minor| {
+        ctx.is_es = true;
+        ctx.major = major_minor.major;
+        ctx.minor = major_minor.minor;
+    } else |_| {
+        const major_minor = try parseDesktopVersion(version_ptr.?);
+        ctx.major = major_minor.major;
+        ctx.minor = major_minor.minor;
+    }
 
     // Exact replica of the glad logic: ES 2.0 is supported when major >= 2,
     // ES 3.0 when major >= 3.
@@ -948,6 +962,12 @@ fn parseVersion(version: [*:0]const u8) LoadError!Version {
         return parseVersionNumbers(std.mem.sliceTo(version, 0)[sc.len..]);
     }
     return error.InvalidVersion;
+}
+
+/// Parses a desktop OpenGL version string: the leading `major.minor`
+/// number, optionally followed by a release number and vendor info.
+fn parseDesktopVersion(version: [*:0]const u8) LoadError!Version {
+    return parseVersionNumbers(std.mem.sliceTo(version, 0));
 }
 
 /// Parses a `major.minor` version number from the beginning of `s`.

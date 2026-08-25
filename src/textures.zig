@@ -254,6 +254,15 @@ pub const PixelFormat = enum(u32) {
     /// Red, green, blue and alpha components (`GL_RGBA`).
     rgba = 0x1908,
 
+    /// Red, green, blue and alpha components holding unnormalized
+    /// integers (`GL_RGBA_INTEGER`); required to upload data for
+    /// `usampler2d`/`isampler2d` textures such as `rgba32ui`.
+    rgba_integer = 0x8D99,
+
+    /// Single red component holding an unnormalized integer
+    /// (`GL_RED_INTEGER`); used to upload `r32ui` data.
+    red_integer = 0x8D94,
+
     /// Depth component (`GL_DEPTH_COMPONENT`).
     depth_component = 0x1902,
 
