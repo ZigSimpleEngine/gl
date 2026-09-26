@@ -11,7 +11,7 @@
 //! const gl = @import("gl");
 //!
 //! fn getProcAddress(name: [*:0]const u8) callconv(.c) ?*const anyopaque {
-//!     return platform.get_proc_address(name);
+//!     return platform.get_proc_address_fn(name);
 //! }
 //!
 //! pub fn init() !void {
@@ -839,7 +839,7 @@ const gl_num_extensions: u32 = 0x821D;
 /// Loads the OpenGL ES context: determines the version via `glGetString` and
 /// fetches the addresses of all functions of the reported version.
 ///
-/// The loader function `load_fn` is called with the name of the requested
+/// The loader function `get_proc_address_fn` is called with the name of the requested
 /// function (e.g. `"glBindBuffer"`) and must return its address or `null`.
 /// Version detection replicates the `gladLoadGLES2` logic: the prefixes
 /// `OpenGL ES-CM `, `OpenGL ES-CL `, `OpenGL ES ` and `OpenGL SC ` are
@@ -849,11 +849,11 @@ const gl_num_extensions: u32 = 0x821D;
 /// After a successful load the result (major/minor and the
 /// [`es_2_0`](Context.es_2_0), [`es_3_0`](Context.es_3_0) flags) is available
 /// in [`context`](context).
-pub fn load(load_fn: types.LoadFn) LoadError!void {
+pub fn load(get_proc_address_fn: types.LoadFn) LoadError!void {
     var ctx: Context = .{};
 
     // 1. First obtain glGetString — the version cannot be determined without it.
-    ctx.getString = @ptrCast(load_fn("glGetString") orelse return error.GetStringUnavailable);
+    ctx.getString = @ptrCast(get_proc_address_fn("glGetString") orelse return error.GetStringUnavailable);
 
     // 2. Determine the context version. Genuine ES contexts carry an
     //    "OpenGL ES" prefix; desktop OpenGL contexts start straight with
@@ -876,8 +876,8 @@ pub fn load(load_fn: types.LoadFn) LoadError!void {
     ctx.es_3_0 = ctx.major >= 3;
 
     // 3. Load functions according to the version.
-    if (ctx.es_2_0) try loadEs2(&ctx, load_fn);
-    if (ctx.es_3_0) try loadEs3(&ctx, load_fn);
+    if (ctx.es_2_0) try loadEs2(&ctx, get_proc_address_fn);
+    if (ctx.es_3_0) try loadEs3(&ctx, get_proc_address_fn);
 
     context = ctx;
 }
@@ -1009,26 +1009,26 @@ fn parseVersionNumbers(s: []const u8) LoadError!Version {
 
 /// Loads a single function pointer by name.
 ///
-/// Requests the address of the native function `name` from `load_fn` and
+/// Requests the address of the native function `name` from `get_proc_address_fn` and
 /// reinterpret-casts it to the typed function pointer `T`. Fails with
 /// [`error.MissingFunction`](LoadError.MissingFunction) if the loader returns
 /// `null`.
-fn loadProc(comptime T: type, load_fn: types.LoadFn, name: [:0]const u8) LoadError!T {
-    const loaded_fn = load_fn(name) orelse return error.MissingFunction;
+fn loadProc(comptime T: type, get_proc_address_fn: types.LoadFn, name: [:0]const u8) LoadError!T {
+    const loaded_fn = get_proc_address_fn(name) orelse return error.MissingFunction;
     return @ptrCast(loaded_fn);
 }
 
 /// Try to load a proc, returning null if unavailable (used for tolerant WebGL loading).
-fn loadProcOpt(comptime T: type, load_fn: types.LoadFn, name: [:0]const u8) ?T {
-    if (load_fn(name)) |ptr| return @ptrCast(ptr);
+fn loadProcOpt(comptime T: type, get_proc_address_fn: types.LoadFn, name: [:0]const u8) ?T {
+    if (get_proc_address_fn(name)) |ptr| return @ptrCast(ptr);
     return null;
 }
 
 /// Assigns `field` if proc is available; on emscripten missing procs are tolerated
 /// (left as undefined — callers must not call unavailable entry points), on native
 /// a missing proc is an error.
-fn assignProc(comptime T: type, field: *T, load_fn: types.LoadFn, name: [:0]const u8) LoadError!void {
-    if (loadProcOpt(T, load_fn, name)) |proc| {
+fn assignProc(comptime T: type, field: *T, get_proc_address_fn: types.LoadFn, name: [:0]const u8) LoadError!void {
+    if (loadProcOpt(T, get_proc_address_fn, name)) |proc| {
         field.* = proc;
     } else if (builtin.target.os.tag != .emscripten) {
         return error.MissingFunction;
@@ -1037,255 +1037,255 @@ fn assignProc(comptime T: type, field: *T, load_fn: types.LoadFn, name: [:0]cons
 }
 
 /// Loads all OpenGL ES 2.0 functions into `ctx`.
-fn loadEs2(ctx: *Context, load_fn: types.LoadFn) LoadError!void {
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.activeTexture, load_fn, "glActiveTexture");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.attach_shader, load_fn, "glAttachShader");
-    try assignProc(*const fn (u32, u32, [*:0]const u8) callconv(.c) void, &ctx.bindAttribLocation, load_fn, "glBindAttribLocation");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_buffer, load_fn, "glBindBuffer");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_framebuffer, load_fn, "glBindFramebuffer");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_renderbuffer, load_fn, "glBindRenderbuffer");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_texture, load_fn, "glBindTexture");
-    try assignProc(*const fn (f32, f32, f32, f32) callconv(.c) void, &ctx.blendColor, load_fn, "glBlendColor");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.blendEquation, load_fn, "glBlendEquation");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.blendEquationSeparate, load_fn, "glBlendEquationSeparate");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.blendFunc, load_fn, "glBlendFunc");
-    try assignProc(*const fn (u32, u32, u32, u32) callconv(.c) void, &ctx.blendFuncSeparate, load_fn, "glBlendFuncSeparate");
-    try assignProc(*const fn (u32, isize, ?*const anyopaque, u32) callconv(.c) void, &ctx.bufferData, load_fn, "glBufferData");
-    try assignProc(*const fn (u32, isize, isize, ?*const anyopaque) callconv(.c) void, &ctx.bufferSubData, load_fn, "glBufferSubData");
-    try assignProc(*const fn (u32) callconv(.c) u32, &ctx.check_framebuffer_status, load_fn, "glCheckFramebufferStatus");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.clear, load_fn, "glClear");
-    try assignProc(*const fn (f32, f32, f32, f32) callconv(.c) void, &ctx.clearColor, load_fn, "glClearColor");
-    try assignProc(*const fn (f32) callconv(.c) void, &ctx.clear_depthf, load_fn, "glClearDepthf");
-    try assignProc(*const fn (i32) callconv(.c) void, &ctx.clearStencil, load_fn, "glClearStencil");
-    try assignProc(*const fn (u8, u8, u8, u8) callconv(.c) void, &ctx.color_mask, load_fn, "glColorMask");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.compile_shader, load_fn, "glCompileShader");
-    try assignProc(*const fn (u32, i32, u32, i32, i32, i32, i32, ?*const anyopaque) callconv(.c) void, &ctx.compressed_tex_image_2d, load_fn, "glCompressedTexImage2D");
-    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, u32, i32, ?*const anyopaque) callconv(.c) void, &ctx.compressed_tex_sub_image_2d, load_fn, "glCompressedTexSubImage2D");
-    try assignProc(*const fn (u32, i32, u32, i32, i32, i32, i32, i32) callconv(.c) void, &ctx.copy_tex_image_2d, load_fn, "glCopyTexImage2D");
-    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, i32, i32) callconv(.c) void, &ctx.copy_tex_sub_image_2d, load_fn, "glCopyTexSubImage2D");
-    try assignProc(*const fn () callconv(.c) u32, &ctx.create_program, load_fn, "glCreateProgram");
-    try assignProc(*const fn (u32) callconv(.c) u32, &ctx.create_shader, load_fn, "glCreateShader");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.cullFace, load_fn, "glCullFace");
-    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_buffers, load_fn, "glDeleteBuffers");
-    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_framebuffers, load_fn, "glDeleteFramebuffers");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.delete_program, load_fn, "glDeleteProgram");
-    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_renderbuffers, load_fn, "glDeleteRenderbuffers");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.delete_shader, load_fn, "glDeleteShader");
-    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_textures, load_fn, "glDeleteTextures");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.depthFunc, load_fn, "glDepthFunc");
-    try assignProc(*const fn (u8) callconv(.c) void, &ctx.depthMask, load_fn, "glDepthMask");
-    try assignProc(*const fn (f32, f32) callconv(.c) void, &ctx.depth_rangef, load_fn, "glDepthRangef");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.detach_shader, load_fn, "glDetachShader");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.disable, load_fn, "glDisable");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.disable_vertex_attrib_array, load_fn, "glDisableVertexAttribArray");
-    try assignProc(*const fn (u32, i32, i32) callconv(.c) void, &ctx.drawArrays, load_fn, "glDrawArrays");
-    try assignProc(*const fn (u32, i32, u32, ?*const anyopaque) callconv(.c) void, &ctx.drawElements, load_fn, "glDrawElements");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.enable, load_fn, "glEnable");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.enable_vertex_attrib_array, load_fn, "glEnableVertexAttribArray");
-    try assignProc(*const fn () callconv(.c) void, &ctx.finish, load_fn, "glFinish");
-    try assignProc(*const fn () callconv(.c) void, &ctx.flush, load_fn, "glFlush");
-    try assignProc(*const fn (u32, u32, u32, u32) callconv(.c) void, &ctx.framebuffer_renderbuffer, load_fn, "glFramebufferRenderbuffer");
-    try assignProc(*const fn (u32, u32, u32, u32, i32) callconv(.c) void, &ctx.framebuffer_texture_2d, load_fn, "glFramebufferTexture2D");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.frontFace, load_fn, "glFrontFace");
-    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_buffers, load_fn, "glGenBuffers");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.generateMipmap, load_fn, "glGenerateMipmap");
-    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_framebuffers, load_fn, "glGenFramebuffers");
-    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_renderbuffers, load_fn, "glGenRenderbuffers");
-    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_textures, load_fn, "glGenTextures");
-    try assignProc(*const fn (u32, u32, i32, ?*i32, ?*i32, ?*u32, [*]u8) callconv(.c) void, &ctx.getActiveAttrib, load_fn, "glGetActiveAttrib");
-    try assignProc(*const fn (u32, u32, i32, ?*i32, ?*i32, ?*u32, [*]u8) callconv(.c) void, &ctx.getActiveUniform, load_fn, "glGetActiveUniform");
-    try assignProc(*const fn (u32, i32, ?*i32, [*]u32) callconv(.c) void, &ctx.getAttachedShaders, load_fn, "glGetAttachedShaders");
-    try assignProc(*const fn (u32, [*:0]const u8) callconv(.c) i32, &ctx.getAttribLocation, load_fn, "glGetAttribLocation");
-    try assignProc(*const fn (u32, [*]u8) callconv(.c) void, &ctx.get_boolean_v, load_fn, "glGetBooleanv");
-    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_buffer_parameter_iv, load_fn, "glGetBufferParameteriv");
-    try assignProc(*const fn () callconv(.c) u32, &ctx.getError, load_fn, "glGetError");
-    try assignProc(*const fn (u32, [*]f32) callconv(.c) void, &ctx.get_float_v, load_fn, "glGetFloatv");
-    try assignProc(*const fn (u32, u32, u32, [*]i32) callconv(.c) void, &ctx.get_framebuffer_attachment_parameter_iv, load_fn, "glGetFramebufferAttachmentParameteriv");
-    try assignProc(*const fn (u32, [*]i32) callconv(.c) void, &ctx.get_integer_v, load_fn, "glGetIntegerv");
-    try assignProc(*const fn (u32, i32, ?*i32, [*]u8) callconv(.c) void, &ctx.get_program_info_log, load_fn, "glGetProgramInfoLog");
-    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_program_iv, load_fn, "glGetProgramiv");
-    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_renderbuffer_parameter_iv, load_fn, "glGetRenderbufferParameteriv");
-    try assignProc(*const fn (u32, u32, i32, i32) callconv(.c) void, &ctx.renderbuffer_storage, load_fn, "glRenderbufferStorage");
-    try assignProc(*const fn (u32, i32, ?*i32, [*]u8) callconv(.c) void, &ctx.get_shader_info_log, load_fn, "glGetShaderInfoLog");
-    try assignProc(*const fn (u32, u32, [*]i32, ?*i32) callconv(.c) void, &ctx.get_shader_precision_format, load_fn, "glGetShaderPrecisionFormat");
-    try assignProc(*const fn (u32, i32, ?*i32, [*]u8) callconv(.c) void, &ctx.get_shader_source, load_fn, "glGetShaderSource");
-    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_shader_iv, load_fn, "glGetShaderiv");
-    try assignProc(*const fn (u32) callconv(.c) ?[*:0]const u8, &ctx.getString, load_fn, "glGetString");
-    try assignProc(*const fn (u32, u32, [*]f32) callconv(.c) void, &ctx.get_tex_parameter_fv, load_fn, "glGetTexParameterfv");
-    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_tex_parameter_iv, load_fn, "glGetTexParameteriv");
-    try assignProc(*const fn (u32, i32, [*]f32) callconv(.c) void, &ctx.get_uniform_fv, load_fn, "glGetUniformfv");
-    try assignProc(*const fn (u32, i32, [*]i32) callconv(.c) void, &ctx.get_uniform_iv, load_fn, "glGetUniformiv");
-    try assignProc(*const fn (u32, [*:0]const u8) callconv(.c) i32, &ctx.get_uniform_location, load_fn, "glGetUniformLocation");
-    try assignProc(*const fn (u32, u32, [*]f32) callconv(.c) void, &ctx.get_vertex_attrib_fv, load_fn, "glGetVertexAttribfv");
-    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_vertex_attrib_iv, load_fn, "glGetVertexAttribiv");
-    try assignProc(*const fn (u32, u32, ?*?*anyopaque) callconv(.c) void, &ctx.get_vertex_attrib_pointer_v, load_fn, "glGetVertexAttribPointerv");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.hint, load_fn, "glHint");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isBuffer, load_fn, "glIsBuffer");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isEnabled, load_fn, "glIsEnabled");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isFramebuffer, load_fn, "glIsFramebuffer");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isProgram, load_fn, "glIsProgram");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isRenderbuffer, load_fn, "glIsRenderbuffer");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isShader, load_fn, "glIsShader");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isTexture, load_fn, "glIsTexture");
-    try assignProc(*const fn (f32) callconv(.c) void, &ctx.lineWidth, load_fn, "glLineWidth");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.link_program, load_fn, "glLinkProgram");
-    try assignProc(*const fn (u32, i32) callconv(.c) void, &ctx.pixel_store_i, load_fn, "glPixelStorei");
-    try assignProc(*const fn (f32, f32) callconv(.c) void, &ctx.polygonOffset, load_fn, "glPolygonOffset");
-    try assignProc(*const fn (i32, i32, i32, i32, u32, u32, ?*anyopaque) callconv(.c) void, &ctx.readPixels, load_fn, "glReadPixels");
-    try assignProc(*const fn () callconv(.c) void, &ctx.release_shader_compiler, load_fn, "glReleaseShaderCompiler");
-    try assignProc(*const fn (f32, u8) callconv(.c) void, &ctx.sampleCoverage, load_fn, "glSampleCoverage");
-    try assignProc(*const fn (i32, i32, i32, i32) callconv(.c) void, &ctx.scissor, load_fn, "glScissor");
-    try assignProc(*const fn (i32, [*]const u32, u32, ?*const anyopaque, i32) callconv(.c) void, &ctx.shader_binary, load_fn, "glShaderBinary");
-    try assignProc(*const fn (u32, i32, [*]const [*:0]const u8, ?[*]const i32) callconv(.c) void, &ctx.shader_source, load_fn, "glShaderSource");
-    try assignProc(*const fn (u32, i32, u32) callconv(.c) void, &ctx.stencilFunc, load_fn, "glStencilFunc");
-    try assignProc(*const fn (u32, u32, i32, u32) callconv(.c) void, &ctx.stencilFuncSeparate, load_fn, "glStencilFuncSeparate");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.stencilMask, load_fn, "glStencilMask");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.stencilMaskSeparate, load_fn, "glStencilMaskSeparate");
-    try assignProc(*const fn (u32, u32, u32) callconv(.c) void, &ctx.stencilOp, load_fn, "glStencilOp");
-    try assignProc(*const fn (u32, u32, u32, u32) callconv(.c) void, &ctx.stencilOpSeparate, load_fn, "glStencilOpSeparate");
-    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, u32, u32, ?*const anyopaque) callconv(.c) void, &ctx.tex_image_2d, load_fn, "glTexImage2D");
-    try assignProc(*const fn (u32, u32, f32) callconv(.c) void, &ctx.tex_parameter_f, load_fn, "glTexParameterf");
-    try assignProc(*const fn (u32, u32, [*]const f32) callconv(.c) void, &ctx.tex_parameter_fv, load_fn, "glTexParameterfv");
-    try assignProc(*const fn (u32, u32, i32) callconv(.c) void, &ctx.tex_parameter_i, load_fn, "glTexParameteri");
-    try assignProc(*const fn (u32, u32, [*]const i32) callconv(.c) void, &ctx.tex_parameter_iv, load_fn, "glTexParameteriv");
-    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, u32, u32, ?*const anyopaque) callconv(.c) void, &ctx.tex_sub_image_2d, load_fn, "glTexSubImage2D");
-    try assignProc(*const fn (i32, f32) callconv(.c) void, &ctx.uniform1f, load_fn, "glUniform1f");
-    try assignProc(*const fn (i32, i32, [*]const f32) callconv(.c) void, &ctx.uniform1fv, load_fn, "glUniform1fv");
-    try assignProc(*const fn (i32, i32) callconv(.c) void, &ctx.uniform1i, load_fn, "glUniform1i");
-    try assignProc(*const fn (i32, i32, [*]const i32) callconv(.c) void, &ctx.uniform1iv, load_fn, "glUniform1iv");
-    try assignProc(*const fn (i32, f32, f32) callconv(.c) void, &ctx.uniform2f, load_fn, "glUniform2f");
-    try assignProc(*const fn (i32, i32, [*]const f32) callconv(.c) void, &ctx.uniform2fv, load_fn, "glUniform2fv");
-    try assignProc(*const fn (i32, i32, i32) callconv(.c) void, &ctx.uniform2i, load_fn, "glUniform2i");
-    try assignProc(*const fn (i32, i32, [*]const i32) callconv(.c) void, &ctx.uniform2iv, load_fn, "glUniform2iv");
-    try assignProc(*const fn (i32, f32, f32, f32) callconv(.c) void, &ctx.uniform3f, load_fn, "glUniform3f");
-    try assignProc(*const fn (i32, i32, [*]const f32) callconv(.c) void, &ctx.uniform3fv, load_fn, "glUniform3fv");
-    try assignProc(*const fn (i32, i32, i32, i32) callconv(.c) void, &ctx.uniform3i, load_fn, "glUniform3i");
-    try assignProc(*const fn (i32, i32, [*]const i32) callconv(.c) void, &ctx.uniform3iv, load_fn, "glUniform3iv");
-    try assignProc(*const fn (i32, f32, f32, f32, f32) callconv(.c) void, &ctx.uniform4f, load_fn, "glUniform4f");
-    try assignProc(*const fn (i32, i32, [*]const f32) callconv(.c) void, &ctx.uniform4fv, load_fn, "glUniform4fv");
-    try assignProc(*const fn (i32, i32, i32, i32, i32) callconv(.c) void, &ctx.uniform4i, load_fn, "glUniform4i");
-    try assignProc(*const fn (i32, i32, [*]const i32) callconv(.c) void, &ctx.uniform4iv, load_fn, "glUniform4iv");
-    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix2fv, load_fn, "glUniformMatrix2fv");
-    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix3fv, load_fn, "glUniformMatrix3fv");
-    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix4fv, load_fn, "glUniformMatrix4fv");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.use_program, load_fn, "glUseProgram");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.validate_program, load_fn, "glValidateProgram");
-    try assignProc(*const fn (u32, f32) callconv(.c) void, &ctx.vertexAttrib1f, load_fn, "glVertexAttrib1f");
-    try assignProc(*const fn (u32, [*]const f32) callconv(.c) void, &ctx.vertexAttrib1fv, load_fn, "glVertexAttrib1fv");
-    try assignProc(*const fn (u32, f32, f32) callconv(.c) void, &ctx.vertexAttrib2f, load_fn, "glVertexAttrib2f");
-    try assignProc(*const fn (u32, [*]const f32) callconv(.c) void, &ctx.vertexAttrib2fv, load_fn, "glVertexAttrib2fv");
-    try assignProc(*const fn (u32, f32, f32, f32) callconv(.c) void, &ctx.vertexAttrib3f, load_fn, "glVertexAttrib3f");
-    try assignProc(*const fn (u32, [*]const f32) callconv(.c) void, &ctx.vertexAttrib3fv, load_fn, "glVertexAttrib3fv");
-    try assignProc(*const fn (u32, f32, f32, f32, f32) callconv(.c) void, &ctx.vertexAttrib4f, load_fn, "glVertexAttrib4f");
-    try assignProc(*const fn (u32, [*]const f32) callconv(.c) void, &ctx.vertexAttrib4fv, load_fn, "glVertexAttrib4fv");
-    try assignProc(*const fn (u32, i32, u32, u8, i32, ?*const anyopaque) callconv(.c) void, &ctx.vertex_attrib_pointer, load_fn, "glVertexAttribPointer");
-    try assignProc(*const fn (i32, i32, i32, i32) callconv(.c) void, &ctx.viewport, load_fn, "glViewport");
+fn loadEs2(ctx: *Context, get_proc_address_fn: types.LoadFn) LoadError!void {
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.activeTexture, get_proc_address_fn, "glActiveTexture");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.attach_shader, get_proc_address_fn, "glAttachShader");
+    try assignProc(*const fn (u32, u32, [*:0]const u8) callconv(.c) void, &ctx.bindAttribLocation, get_proc_address_fn, "glBindAttribLocation");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_buffer, get_proc_address_fn, "glBindBuffer");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_framebuffer, get_proc_address_fn, "glBindFramebuffer");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_renderbuffer, get_proc_address_fn, "glBindRenderbuffer");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_texture, get_proc_address_fn, "glBindTexture");
+    try assignProc(*const fn (f32, f32, f32, f32) callconv(.c) void, &ctx.blendColor, get_proc_address_fn, "glBlendColor");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.blendEquation, get_proc_address_fn, "glBlendEquation");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.blendEquationSeparate, get_proc_address_fn, "glBlendEquationSeparate");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.blendFunc, get_proc_address_fn, "glBlendFunc");
+    try assignProc(*const fn (u32, u32, u32, u32) callconv(.c) void, &ctx.blendFuncSeparate, get_proc_address_fn, "glBlendFuncSeparate");
+    try assignProc(*const fn (u32, isize, ?*const anyopaque, u32) callconv(.c) void, &ctx.bufferData, get_proc_address_fn, "glBufferData");
+    try assignProc(*const fn (u32, isize, isize, ?*const anyopaque) callconv(.c) void, &ctx.bufferSubData, get_proc_address_fn, "glBufferSubData");
+    try assignProc(*const fn (u32) callconv(.c) u32, &ctx.check_framebuffer_status, get_proc_address_fn, "glCheckFramebufferStatus");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.clear, get_proc_address_fn, "glClear");
+    try assignProc(*const fn (f32, f32, f32, f32) callconv(.c) void, &ctx.clearColor, get_proc_address_fn, "glClearColor");
+    try assignProc(*const fn (f32) callconv(.c) void, &ctx.clear_depthf, get_proc_address_fn, "glClearDepthf");
+    try assignProc(*const fn (i32) callconv(.c) void, &ctx.clearStencil, get_proc_address_fn, "glClearStencil");
+    try assignProc(*const fn (u8, u8, u8, u8) callconv(.c) void, &ctx.color_mask, get_proc_address_fn, "glColorMask");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.compile_shader, get_proc_address_fn, "glCompileShader");
+    try assignProc(*const fn (u32, i32, u32, i32, i32, i32, i32, ?*const anyopaque) callconv(.c) void, &ctx.compressed_tex_image_2d, get_proc_address_fn, "glCompressedTexImage2D");
+    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, u32, i32, ?*const anyopaque) callconv(.c) void, &ctx.compressed_tex_sub_image_2d, get_proc_address_fn, "glCompressedTexSubImage2D");
+    try assignProc(*const fn (u32, i32, u32, i32, i32, i32, i32, i32) callconv(.c) void, &ctx.copy_tex_image_2d, get_proc_address_fn, "glCopyTexImage2D");
+    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, i32, i32) callconv(.c) void, &ctx.copy_tex_sub_image_2d, get_proc_address_fn, "glCopyTexSubImage2D");
+    try assignProc(*const fn () callconv(.c) u32, &ctx.create_program, get_proc_address_fn, "glCreateProgram");
+    try assignProc(*const fn (u32) callconv(.c) u32, &ctx.create_shader, get_proc_address_fn, "glCreateShader");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.cullFace, get_proc_address_fn, "glCullFace");
+    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_buffers, get_proc_address_fn, "glDeleteBuffers");
+    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_framebuffers, get_proc_address_fn, "glDeleteFramebuffers");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.delete_program, get_proc_address_fn, "glDeleteProgram");
+    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_renderbuffers, get_proc_address_fn, "glDeleteRenderbuffers");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.delete_shader, get_proc_address_fn, "glDeleteShader");
+    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_textures, get_proc_address_fn, "glDeleteTextures");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.depthFunc, get_proc_address_fn, "glDepthFunc");
+    try assignProc(*const fn (u8) callconv(.c) void, &ctx.depthMask, get_proc_address_fn, "glDepthMask");
+    try assignProc(*const fn (f32, f32) callconv(.c) void, &ctx.depth_rangef, get_proc_address_fn, "glDepthRangef");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.detach_shader, get_proc_address_fn, "glDetachShader");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.disable, get_proc_address_fn, "glDisable");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.disable_vertex_attrib_array, get_proc_address_fn, "glDisableVertexAttribArray");
+    try assignProc(*const fn (u32, i32, i32) callconv(.c) void, &ctx.drawArrays, get_proc_address_fn, "glDrawArrays");
+    try assignProc(*const fn (u32, i32, u32, ?*const anyopaque) callconv(.c) void, &ctx.drawElements, get_proc_address_fn, "glDrawElements");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.enable, get_proc_address_fn, "glEnable");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.enable_vertex_attrib_array, get_proc_address_fn, "glEnableVertexAttribArray");
+    try assignProc(*const fn () callconv(.c) void, &ctx.finish, get_proc_address_fn, "glFinish");
+    try assignProc(*const fn () callconv(.c) void, &ctx.flush, get_proc_address_fn, "glFlush");
+    try assignProc(*const fn (u32, u32, u32, u32) callconv(.c) void, &ctx.framebuffer_renderbuffer, get_proc_address_fn, "glFramebufferRenderbuffer");
+    try assignProc(*const fn (u32, u32, u32, u32, i32) callconv(.c) void, &ctx.framebuffer_texture_2d, get_proc_address_fn, "glFramebufferTexture2D");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.frontFace, get_proc_address_fn, "glFrontFace");
+    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_buffers, get_proc_address_fn, "glGenBuffers");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.generateMipmap, get_proc_address_fn, "glGenerateMipmap");
+    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_framebuffers, get_proc_address_fn, "glGenFramebuffers");
+    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_renderbuffers, get_proc_address_fn, "glGenRenderbuffers");
+    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_textures, get_proc_address_fn, "glGenTextures");
+    try assignProc(*const fn (u32, u32, i32, ?*i32, ?*i32, ?*u32, [*]u8) callconv(.c) void, &ctx.getActiveAttrib, get_proc_address_fn, "glGetActiveAttrib");
+    try assignProc(*const fn (u32, u32, i32, ?*i32, ?*i32, ?*u32, [*]u8) callconv(.c) void, &ctx.getActiveUniform, get_proc_address_fn, "glGetActiveUniform");
+    try assignProc(*const fn (u32, i32, ?*i32, [*]u32) callconv(.c) void, &ctx.getAttachedShaders, get_proc_address_fn, "glGetAttachedShaders");
+    try assignProc(*const fn (u32, [*:0]const u8) callconv(.c) i32, &ctx.getAttribLocation, get_proc_address_fn, "glGetAttribLocation");
+    try assignProc(*const fn (u32, [*]u8) callconv(.c) void, &ctx.get_boolean_v, get_proc_address_fn, "glGetBooleanv");
+    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_buffer_parameter_iv, get_proc_address_fn, "glGetBufferParameteriv");
+    try assignProc(*const fn () callconv(.c) u32, &ctx.getError, get_proc_address_fn, "glGetError");
+    try assignProc(*const fn (u32, [*]f32) callconv(.c) void, &ctx.get_float_v, get_proc_address_fn, "glGetFloatv");
+    try assignProc(*const fn (u32, u32, u32, [*]i32) callconv(.c) void, &ctx.get_framebuffer_attachment_parameter_iv, get_proc_address_fn, "glGetFramebufferAttachmentParameteriv");
+    try assignProc(*const fn (u32, [*]i32) callconv(.c) void, &ctx.get_integer_v, get_proc_address_fn, "glGetIntegerv");
+    try assignProc(*const fn (u32, i32, ?*i32, [*]u8) callconv(.c) void, &ctx.get_program_info_log, get_proc_address_fn, "glGetProgramInfoLog");
+    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_program_iv, get_proc_address_fn, "glGetProgramiv");
+    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_renderbuffer_parameter_iv, get_proc_address_fn, "glGetRenderbufferParameteriv");
+    try assignProc(*const fn (u32, u32, i32, i32) callconv(.c) void, &ctx.renderbuffer_storage, get_proc_address_fn, "glRenderbufferStorage");
+    try assignProc(*const fn (u32, i32, ?*i32, [*]u8) callconv(.c) void, &ctx.get_shader_info_log, get_proc_address_fn, "glGetShaderInfoLog");
+    try assignProc(*const fn (u32, u32, [*]i32, ?*i32) callconv(.c) void, &ctx.get_shader_precision_format, get_proc_address_fn, "glGetShaderPrecisionFormat");
+    try assignProc(*const fn (u32, i32, ?*i32, [*]u8) callconv(.c) void, &ctx.get_shader_source, get_proc_address_fn, "glGetShaderSource");
+    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_shader_iv, get_proc_address_fn, "glGetShaderiv");
+    try assignProc(*const fn (u32) callconv(.c) ?[*:0]const u8, &ctx.getString, get_proc_address_fn, "glGetString");
+    try assignProc(*const fn (u32, u32, [*]f32) callconv(.c) void, &ctx.get_tex_parameter_fv, get_proc_address_fn, "glGetTexParameterfv");
+    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_tex_parameter_iv, get_proc_address_fn, "glGetTexParameteriv");
+    try assignProc(*const fn (u32, i32, [*]f32) callconv(.c) void, &ctx.get_uniform_fv, get_proc_address_fn, "glGetUniformfv");
+    try assignProc(*const fn (u32, i32, [*]i32) callconv(.c) void, &ctx.get_uniform_iv, get_proc_address_fn, "glGetUniformiv");
+    try assignProc(*const fn (u32, [*:0]const u8) callconv(.c) i32, &ctx.get_uniform_location, get_proc_address_fn, "glGetUniformLocation");
+    try assignProc(*const fn (u32, u32, [*]f32) callconv(.c) void, &ctx.get_vertex_attrib_fv, get_proc_address_fn, "glGetVertexAttribfv");
+    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_vertex_attrib_iv, get_proc_address_fn, "glGetVertexAttribiv");
+    try assignProc(*const fn (u32, u32, ?*?*anyopaque) callconv(.c) void, &ctx.get_vertex_attrib_pointer_v, get_proc_address_fn, "glGetVertexAttribPointerv");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.hint, get_proc_address_fn, "glHint");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isBuffer, get_proc_address_fn, "glIsBuffer");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isEnabled, get_proc_address_fn, "glIsEnabled");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isFramebuffer, get_proc_address_fn, "glIsFramebuffer");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isProgram, get_proc_address_fn, "glIsProgram");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isRenderbuffer, get_proc_address_fn, "glIsRenderbuffer");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isShader, get_proc_address_fn, "glIsShader");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isTexture, get_proc_address_fn, "glIsTexture");
+    try assignProc(*const fn (f32) callconv(.c) void, &ctx.lineWidth, get_proc_address_fn, "glLineWidth");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.link_program, get_proc_address_fn, "glLinkProgram");
+    try assignProc(*const fn (u32, i32) callconv(.c) void, &ctx.pixel_store_i, get_proc_address_fn, "glPixelStorei");
+    try assignProc(*const fn (f32, f32) callconv(.c) void, &ctx.polygonOffset, get_proc_address_fn, "glPolygonOffset");
+    try assignProc(*const fn (i32, i32, i32, i32, u32, u32, ?*anyopaque) callconv(.c) void, &ctx.readPixels, get_proc_address_fn, "glReadPixels");
+    try assignProc(*const fn () callconv(.c) void, &ctx.release_shader_compiler, get_proc_address_fn, "glReleaseShaderCompiler");
+    try assignProc(*const fn (f32, u8) callconv(.c) void, &ctx.sampleCoverage, get_proc_address_fn, "glSampleCoverage");
+    try assignProc(*const fn (i32, i32, i32, i32) callconv(.c) void, &ctx.scissor, get_proc_address_fn, "glScissor");
+    try assignProc(*const fn (i32, [*]const u32, u32, ?*const anyopaque, i32) callconv(.c) void, &ctx.shader_binary, get_proc_address_fn, "glShaderBinary");
+    try assignProc(*const fn (u32, i32, [*]const [*:0]const u8, ?[*]const i32) callconv(.c) void, &ctx.shader_source, get_proc_address_fn, "glShaderSource");
+    try assignProc(*const fn (u32, i32, u32) callconv(.c) void, &ctx.stencilFunc, get_proc_address_fn, "glStencilFunc");
+    try assignProc(*const fn (u32, u32, i32, u32) callconv(.c) void, &ctx.stencilFuncSeparate, get_proc_address_fn, "glStencilFuncSeparate");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.stencilMask, get_proc_address_fn, "glStencilMask");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.stencilMaskSeparate, get_proc_address_fn, "glStencilMaskSeparate");
+    try assignProc(*const fn (u32, u32, u32) callconv(.c) void, &ctx.stencilOp, get_proc_address_fn, "glStencilOp");
+    try assignProc(*const fn (u32, u32, u32, u32) callconv(.c) void, &ctx.stencilOpSeparate, get_proc_address_fn, "glStencilOpSeparate");
+    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, u32, u32, ?*const anyopaque) callconv(.c) void, &ctx.tex_image_2d, get_proc_address_fn, "glTexImage2D");
+    try assignProc(*const fn (u32, u32, f32) callconv(.c) void, &ctx.tex_parameter_f, get_proc_address_fn, "glTexParameterf");
+    try assignProc(*const fn (u32, u32, [*]const f32) callconv(.c) void, &ctx.tex_parameter_fv, get_proc_address_fn, "glTexParameterfv");
+    try assignProc(*const fn (u32, u32, i32) callconv(.c) void, &ctx.tex_parameter_i, get_proc_address_fn, "glTexParameteri");
+    try assignProc(*const fn (u32, u32, [*]const i32) callconv(.c) void, &ctx.tex_parameter_iv, get_proc_address_fn, "glTexParameteriv");
+    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, u32, u32, ?*const anyopaque) callconv(.c) void, &ctx.tex_sub_image_2d, get_proc_address_fn, "glTexSubImage2D");
+    try assignProc(*const fn (i32, f32) callconv(.c) void, &ctx.uniform1f, get_proc_address_fn, "glUniform1f");
+    try assignProc(*const fn (i32, i32, [*]const f32) callconv(.c) void, &ctx.uniform1fv, get_proc_address_fn, "glUniform1fv");
+    try assignProc(*const fn (i32, i32) callconv(.c) void, &ctx.uniform1i, get_proc_address_fn, "glUniform1i");
+    try assignProc(*const fn (i32, i32, [*]const i32) callconv(.c) void, &ctx.uniform1iv, get_proc_address_fn, "glUniform1iv");
+    try assignProc(*const fn (i32, f32, f32) callconv(.c) void, &ctx.uniform2f, get_proc_address_fn, "glUniform2f");
+    try assignProc(*const fn (i32, i32, [*]const f32) callconv(.c) void, &ctx.uniform2fv, get_proc_address_fn, "glUniform2fv");
+    try assignProc(*const fn (i32, i32, i32) callconv(.c) void, &ctx.uniform2i, get_proc_address_fn, "glUniform2i");
+    try assignProc(*const fn (i32, i32, [*]const i32) callconv(.c) void, &ctx.uniform2iv, get_proc_address_fn, "glUniform2iv");
+    try assignProc(*const fn (i32, f32, f32, f32) callconv(.c) void, &ctx.uniform3f, get_proc_address_fn, "glUniform3f");
+    try assignProc(*const fn (i32, i32, [*]const f32) callconv(.c) void, &ctx.uniform3fv, get_proc_address_fn, "glUniform3fv");
+    try assignProc(*const fn (i32, i32, i32, i32) callconv(.c) void, &ctx.uniform3i, get_proc_address_fn, "glUniform3i");
+    try assignProc(*const fn (i32, i32, [*]const i32) callconv(.c) void, &ctx.uniform3iv, get_proc_address_fn, "glUniform3iv");
+    try assignProc(*const fn (i32, f32, f32, f32, f32) callconv(.c) void, &ctx.uniform4f, get_proc_address_fn, "glUniform4f");
+    try assignProc(*const fn (i32, i32, [*]const f32) callconv(.c) void, &ctx.uniform4fv, get_proc_address_fn, "glUniform4fv");
+    try assignProc(*const fn (i32, i32, i32, i32, i32) callconv(.c) void, &ctx.uniform4i, get_proc_address_fn, "glUniform4i");
+    try assignProc(*const fn (i32, i32, [*]const i32) callconv(.c) void, &ctx.uniform4iv, get_proc_address_fn, "glUniform4iv");
+    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix2fv, get_proc_address_fn, "glUniformMatrix2fv");
+    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix3fv, get_proc_address_fn, "glUniformMatrix3fv");
+    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix4fv, get_proc_address_fn, "glUniformMatrix4fv");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.use_program, get_proc_address_fn, "glUseProgram");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.validate_program, get_proc_address_fn, "glValidateProgram");
+    try assignProc(*const fn (u32, f32) callconv(.c) void, &ctx.vertexAttrib1f, get_proc_address_fn, "glVertexAttrib1f");
+    try assignProc(*const fn (u32, [*]const f32) callconv(.c) void, &ctx.vertexAttrib1fv, get_proc_address_fn, "glVertexAttrib1fv");
+    try assignProc(*const fn (u32, f32, f32) callconv(.c) void, &ctx.vertexAttrib2f, get_proc_address_fn, "glVertexAttrib2f");
+    try assignProc(*const fn (u32, [*]const f32) callconv(.c) void, &ctx.vertexAttrib2fv, get_proc_address_fn, "glVertexAttrib2fv");
+    try assignProc(*const fn (u32, f32, f32, f32) callconv(.c) void, &ctx.vertexAttrib3f, get_proc_address_fn, "glVertexAttrib3f");
+    try assignProc(*const fn (u32, [*]const f32) callconv(.c) void, &ctx.vertexAttrib3fv, get_proc_address_fn, "glVertexAttrib3fv");
+    try assignProc(*const fn (u32, f32, f32, f32, f32) callconv(.c) void, &ctx.vertexAttrib4f, get_proc_address_fn, "glVertexAttrib4f");
+    try assignProc(*const fn (u32, [*]const f32) callconv(.c) void, &ctx.vertexAttrib4fv, get_proc_address_fn, "glVertexAttrib4fv");
+    try assignProc(*const fn (u32, i32, u32, u8, i32, ?*const anyopaque) callconv(.c) void, &ctx.vertex_attrib_pointer, get_proc_address_fn, "glVertexAttribPointer");
+    try assignProc(*const fn (i32, i32, i32, i32) callconv(.c) void, &ctx.viewport, get_proc_address_fn, "glViewport");
 }
 
 /// Loads all OpenGL ES 3.0 functions into `ctx`.
-fn loadEs3(ctx: *Context, load_fn: types.LoadFn) LoadError!void {
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.begin_query, load_fn, "glBeginQuery");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.begin_transform_feedback, load_fn, "glBeginTransformFeedback");
-    try assignProc(*const fn (u32, u32, u32) callconv(.c) void, &ctx.bind_buffer_base, load_fn, "glBindBufferBase");
-    try assignProc(*const fn (u32, u32, u32, isize, isize) callconv(.c) void, &ctx.bind_buffer_range, load_fn, "glBindBufferRange");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_sampler, load_fn, "glBindSampler");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_transform_feedback, load_fn, "glBindTransformFeedback");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.bind_vertex_array, load_fn, "glBindVertexArray");
-    try assignProc(*const fn (i32, i32, i32, i32, i32, i32, i32, i32, u32, u32) callconv(.c) void, &ctx.blit_framebuffer, load_fn, "glBlitFramebuffer");
-    try assignProc(*const fn (u32, i32, f32, i32) callconv(.c) void, &ctx.clearBufferFi, load_fn, "glClearBufferfi");
-    try assignProc(*const fn (u32, i32, [*]const f32) callconv(.c) void, &ctx.clearBufferFv, load_fn, "glClearBufferfv");
-    try assignProc(*const fn (u32, i32, [*]const i32) callconv(.c) void, &ctx.clearBufferIv, load_fn, "glClearBufferiv");
-    try assignProc(*const fn (u32, i32, [*]const u32) callconv(.c) void, &ctx.clearBufferUiv, load_fn, "glClearBufferuiv");
-    try assignProc(*const fn (types.Sync, u32, u64) callconv(.c) u32, &ctx.client_wait_sync, load_fn, "glClientWaitSync");
-    try assignProc(*const fn (u32, i32, u32, i32, i32, i32, i32, i32, ?*const anyopaque) callconv(.c) void, &ctx.compressed_tex_image_3d, load_fn, "glCompressedTexImage3D");
-    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, i32, i32, u32, i32, ?*const anyopaque) callconv(.c) void, &ctx.compressed_tex_sub_image_3d, load_fn, "glCompressedTexSubImage3D");
-    try assignProc(*const fn (u32, u32, isize, isize, isize) callconv(.c) void, &ctx.copy_buffer_sub_data, load_fn, "glCopyBufferSubData");
-    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, i32, i32, i32) callconv(.c) void, &ctx.copy_tex_sub_image_3d, load_fn, "glCopyTexSubImage3D");
-    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_queries, load_fn, "glDeleteQueries");
-    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_samplers, load_fn, "glDeleteSamplers");
-    try assignProc(*const fn (types.Sync) callconv(.c) void, &ctx.delete_sync, load_fn, "glDeleteSync");
-    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_transform_feedbacks, load_fn, "glDeleteTransformFeedbacks");
-    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_vertex_arrays, load_fn, "glDeleteVertexArrays");
-    try assignProc(*const fn (u32, i32, i32, i32) callconv(.c) void, &ctx.drawArraysInstanced, load_fn, "glDrawArraysInstanced");
-    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.drawBuffers, load_fn, "glDrawBuffers");
-    try assignProc(*const fn (u32, i32, u32, ?*const anyopaque, i32) callconv(.c) void, &ctx.drawElementsInstanced, load_fn, "glDrawElementsInstanced");
-    try assignProc(*const fn (u32, u32, u32, i32, u32, ?*const anyopaque) callconv(.c) void, &ctx.drawRangeElements, load_fn, "glDrawRangeElements");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.end_query, load_fn, "glEndQuery");
-    try assignProc(*const fn () callconv(.c) void, &ctx.end_transform_feedback, load_fn, "glEndTransformFeedback");
-    try assignProc(*const fn (u32, u32) callconv(.c) types.Sync, &ctx.fence_sync, load_fn, "glFenceSync");
-    try assignProc(*const fn (u32, isize, isize) callconv(.c) void, &ctx.flush_mapped_buffer_range, load_fn, "glFlushMappedBufferRange");
-    try assignProc(*const fn (u32, u32, u32, i32, i32) callconv(.c) void, &ctx.framebuffer_texture_layer, load_fn, "glFramebufferTextureLayer");
-    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_queries, load_fn, "glGenQueries");
-    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_samplers, load_fn, "glGenSamplers");
-    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_transform_feedbacks, load_fn, "glGenTransformFeedbacks");
-    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_vertex_arrays, load_fn, "glGenVertexArrays");
-    try assignProc(*const fn (u32, u32, i32, ?*i32, [*]u8) callconv(.c) void, &ctx.getActiveUniformBlockName, load_fn, "glGetActiveUniformBlockName");
-    try assignProc(*const fn (u32, u32, u32, [*]i32) callconv(.c) void, &ctx.get_active_uniform_block_iv, load_fn, "glGetActiveUniformBlockiv");
-    try assignProc(*const fn (u32, i32, [*]const u32, u32, [*]i32) callconv(.c) void, &ctx.get_active_uniforms_iv, load_fn, "glGetActiveUniformsiv");
-    try assignProc(*const fn (u32, u32, [*]i64) callconv(.c) void, &ctx.get_buffer_parameter_i64_v, load_fn, "glGetBufferParameteri64v");
-    try assignProc(*const fn (u32, u32, ?*?*anyopaque) callconv(.c) void, &ctx.get_buffer_pointer_v, load_fn, "glGetBufferPointerv");
-    try assignProc(*const fn (u32, [*:0]const u8) callconv(.c) i32, &ctx.getFragDataLocation, load_fn, "glGetFragDataLocation");
-    try assignProc(*const fn (u32, u32, [*]i64) callconv(.c) void, &ctx.get_integer64_i_v, load_fn, "glGetInteger64i_v");
-    try assignProc(*const fn (u32, [*]i64) callconv(.c) void, &ctx.get_integer64_v, load_fn, "glGetInteger64v");
-    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_integer_i_v, load_fn, "glGetIntegeri_v");
-    try assignProc(*const fn (u32, u32, u32, i32, [*]i32) callconv(.c) void, &ctx.get_internalformat_iv, load_fn, "glGetInternalformativ");
-    try assignProc(*const fn (u32, i32, ?*i32, ?*u32, ?*anyopaque) callconv(.c) void, &ctx.get_program_binary, load_fn, "glGetProgramBinary");
-    try assignProc(*const fn (u32, u32, [*]u32) callconv(.c) void, &ctx.get_query_object_uiv, load_fn, "glGetQueryObjectuiv");
-    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_query_iv, load_fn, "glGetQueryiv");
-    try assignProc(*const fn (u32, u32, [*]f32) callconv(.c) void, &ctx.get_sampler_parameter_fv, load_fn, "glGetSamplerParameterfv");
-    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_sampler_parameter_iv, load_fn, "glGetSamplerParameteriv");
-    try assignProc(*const fn (u32, u32) callconv(.c) ?[*:0]const u8, &ctx.getStringI, load_fn, "glGetStringi");
-    try assignProc(*const fn (types.Sync, u32, i32, ?*i32, [*]i32) callconv(.c) void, &ctx.get_sync_iv, load_fn, "glGetSynciv");
-    try assignProc(*const fn (u32, u32, i32, ?*i32, ?*i32, ?*u32, [*]u8) callconv(.c) void, &ctx.get_transform_feedback_varying, load_fn, "glGetTransformFeedbackVarying");
-    try assignProc(*const fn (u32, [*:0]const u8) callconv(.c) u32, &ctx.get_uniform_block_index, load_fn, "glGetUniformBlockIndex");
-    try assignProc(*const fn (u32, i32, [*]const [*:0]const u8, [*]u32) callconv(.c) void, &ctx.get_uniform_indices, load_fn, "glGetUniformIndices");
-    try assignProc(*const fn (u32, i32, [*]u32) callconv(.c) void, &ctx.get_uniform_uiv, load_fn, "glGetUniformuiv");
-    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_vertex_attrib_i_iv, load_fn, "glGetVertexAttribIiv");
-    try assignProc(*const fn (u32, u32, [*]u32) callconv(.c) void, &ctx.get_vertex_attrib_i_uiv, load_fn, "glGetVertexAttribIuiv");
-    try assignProc(*const fn (u32, i32, [*]const u32) callconv(.c) void, &ctx.invalidate_framebuffer, load_fn, "glInvalidateFramebuffer");
-    try assignProc(*const fn (u32, i32, [*]const u32, i32, i32, i32, i32) callconv(.c) void, &ctx.invalidate_sub_framebuffer, load_fn, "glInvalidateSubFramebuffer");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isQuery, load_fn, "glIsQuery");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isSampler, load_fn, "glIsSampler");
-    try assignProc(*const fn (types.Sync) callconv(.c) u8, &ctx.isSync, load_fn, "glIsSync");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isTransformFeedback, load_fn, "glIsTransformFeedback");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isVertexArray, load_fn, "glIsVertexArray");
-    try assignProc(*const fn (u32, isize, isize, u32) callconv(.c) ?*anyopaque, &ctx.map_buffer_range, load_fn, "glMapBufferRange");
-    try assignProc(*const fn () callconv(.c) void, &ctx.pause_transform_feedback, load_fn, "glPauseTransformFeedback");
-    try assignProc(*const fn (u32, u32, ?*const anyopaque, i32) callconv(.c) void, &ctx.programBinary, load_fn, "glProgramBinary");
-    try assignProc(*const fn (u32, u32, i32) callconv(.c) void, &ctx.programParameterI, load_fn, "glProgramParameteri");
-    try assignProc(*const fn (u32) callconv(.c) void, &ctx.readBuffer, load_fn, "glReadBuffer");
-    try assignProc(*const fn (u32, i32, u32, i32, i32) callconv(.c) void, &ctx.renderbuffer_storage_multisample, load_fn, "glRenderbufferStorageMultisample");
-    try assignProc(*const fn () callconv(.c) void, &ctx.resume_transform_feedback, load_fn, "glResumeTransformFeedback");
-    try assignProc(*const fn (u32, u32, f32) callconv(.c) void, &ctx.sampler_parameter_f, load_fn, "glSamplerParameterf");
-    try assignProc(*const fn (u32, u32, [*]const f32) callconv(.c) void, &ctx.sampler_parameter_fv, load_fn, "glSamplerParameterfv");
-    try assignProc(*const fn (u32, u32, i32) callconv(.c) void, &ctx.sampler_parameter_i, load_fn, "glSamplerParameteri");
-    try assignProc(*const fn (u32, u32, [*]const i32) callconv(.c) void, &ctx.sampler_parameter_iv, load_fn, "glSamplerParameteriv");
-    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, i32, u32, u32, ?*const anyopaque) callconv(.c) void, &ctx.tex_image_3d, load_fn, "glTexImage3D");
-    try assignProc(*const fn (u32, i32, u32, i32, i32) callconv(.c) void, &ctx.tex_storage_2d, load_fn, "glTexStorage2D");
-    try assignProc(*const fn (u32, i32, u32, i32, i32, i32) callconv(.c) void, &ctx.tex_storage_3d, load_fn, "glTexStorage3D");
-    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, i32, i32, u32, u32, ?*const anyopaque) callconv(.c) void, &ctx.tex_sub_image_3d, load_fn, "glTexSubImage3D");
-    try assignProc(*const fn (u32, i32, [*]const [*:0]const u8, u32) callconv(.c) void, &ctx.transform_feedback_varyings, load_fn, "glTransformFeedbackVaryings");
-    try assignProc(*const fn (i32, u32) callconv(.c) void, &ctx.uniform1ui, load_fn, "glUniform1ui");
-    try assignProc(*const fn (i32, i32, [*]const u32) callconv(.c) void, &ctx.uniform1uiv, load_fn, "glUniform1uiv");
-    try assignProc(*const fn (i32, u32, u32) callconv(.c) void, &ctx.uniform2ui, load_fn, "glUniform2ui");
-    try assignProc(*const fn (i32, i32, [*]const u32) callconv(.c) void, &ctx.uniform2uiv, load_fn, "glUniform2uiv");
-    try assignProc(*const fn (i32, u32, u32, u32) callconv(.c) void, &ctx.uniform3ui, load_fn, "glUniform3ui");
-    try assignProc(*const fn (i32, i32, [*]const u32) callconv(.c) void, &ctx.uniform3uiv, load_fn, "glUniform3uiv");
-    try assignProc(*const fn (i32, u32, u32, u32, u32) callconv(.c) void, &ctx.uniform4ui, load_fn, "glUniform4ui");
-    try assignProc(*const fn (i32, i32, [*]const u32) callconv(.c) void, &ctx.uniform4uiv, load_fn, "glUniform4uiv");
-    try assignProc(*const fn (u32, u32, u32) callconv(.c) void, &ctx.uniform_block_binding, load_fn, "glUniformBlockBinding");
-    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix2x3fv, load_fn, "glUniformMatrix2x3fv");
-    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix2x4fv, load_fn, "glUniformMatrix2x4fv");
-    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix3x2fv, load_fn, "glUniformMatrix3x2fv");
-    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix3x4fv, load_fn, "glUniformMatrix3x4fv");
-    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix4x2fv, load_fn, "glUniformMatrix4x2fv");
-    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix4x3fv, load_fn, "glUniformMatrix4x3fv");
-    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.unmap_buffer, load_fn, "glUnmapBuffer");
-    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.vertex_attrib_divisor, load_fn, "glVertexAttribDivisor");
-    try assignProc(*const fn (u32, i32, i32, i32, i32) callconv(.c) void, &ctx.vertexAttribI4i, load_fn, "glVertexAttribI4i");
-    try assignProc(*const fn (u32, [*]const i32) callconv(.c) void, &ctx.vertexAttribI4iv, load_fn, "glVertexAttribI4iv");
-    try assignProc(*const fn (u32, u32, u32, u32, u32) callconv(.c) void, &ctx.vertexAttribI4ui, load_fn, "glVertexAttribI4ui");
-    try assignProc(*const fn (u32, [*]const u32) callconv(.c) void, &ctx.vertexAttribI4uiv, load_fn, "glVertexAttribI4uiv");
-    try assignProc(*const fn (u32, i32, u32, i32, ?*const anyopaque) callconv(.c) void, &ctx.vertex_attrib_i_pointer, load_fn, "glVertexAttribIPointer");
-    try assignProc(*const fn (types.Sync, u32, u64) callconv(.c) void, &ctx.wait_sync, load_fn, "glWaitSync");
+fn loadEs3(ctx: *Context, get_proc_address_fn: types.LoadFn) LoadError!void {
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.begin_query, get_proc_address_fn, "glBeginQuery");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.begin_transform_feedback, get_proc_address_fn, "glBeginTransformFeedback");
+    try assignProc(*const fn (u32, u32, u32) callconv(.c) void, &ctx.bind_buffer_base, get_proc_address_fn, "glBindBufferBase");
+    try assignProc(*const fn (u32, u32, u32, isize, isize) callconv(.c) void, &ctx.bind_buffer_range, get_proc_address_fn, "glBindBufferRange");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_sampler, get_proc_address_fn, "glBindSampler");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.bind_transform_feedback, get_proc_address_fn, "glBindTransformFeedback");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.bind_vertex_array, get_proc_address_fn, "glBindVertexArray");
+    try assignProc(*const fn (i32, i32, i32, i32, i32, i32, i32, i32, u32, u32) callconv(.c) void, &ctx.blit_framebuffer, get_proc_address_fn, "glBlitFramebuffer");
+    try assignProc(*const fn (u32, i32, f32, i32) callconv(.c) void, &ctx.clearBufferFi, get_proc_address_fn, "glClearBufferfi");
+    try assignProc(*const fn (u32, i32, [*]const f32) callconv(.c) void, &ctx.clearBufferFv, get_proc_address_fn, "glClearBufferfv");
+    try assignProc(*const fn (u32, i32, [*]const i32) callconv(.c) void, &ctx.clearBufferIv, get_proc_address_fn, "glClearBufferiv");
+    try assignProc(*const fn (u32, i32, [*]const u32) callconv(.c) void, &ctx.clearBufferUiv, get_proc_address_fn, "glClearBufferuiv");
+    try assignProc(*const fn (types.Sync, u32, u64) callconv(.c) u32, &ctx.client_wait_sync, get_proc_address_fn, "glClientWaitSync");
+    try assignProc(*const fn (u32, i32, u32, i32, i32, i32, i32, i32, ?*const anyopaque) callconv(.c) void, &ctx.compressed_tex_image_3d, get_proc_address_fn, "glCompressedTexImage3D");
+    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, i32, i32, u32, i32, ?*const anyopaque) callconv(.c) void, &ctx.compressed_tex_sub_image_3d, get_proc_address_fn, "glCompressedTexSubImage3D");
+    try assignProc(*const fn (u32, u32, isize, isize, isize) callconv(.c) void, &ctx.copy_buffer_sub_data, get_proc_address_fn, "glCopyBufferSubData");
+    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, i32, i32, i32) callconv(.c) void, &ctx.copy_tex_sub_image_3d, get_proc_address_fn, "glCopyTexSubImage3D");
+    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_queries, get_proc_address_fn, "glDeleteQueries");
+    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_samplers, get_proc_address_fn, "glDeleteSamplers");
+    try assignProc(*const fn (types.Sync) callconv(.c) void, &ctx.delete_sync, get_proc_address_fn, "glDeleteSync");
+    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_transform_feedbacks, get_proc_address_fn, "glDeleteTransformFeedbacks");
+    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.delete_vertex_arrays, get_proc_address_fn, "glDeleteVertexArrays");
+    try assignProc(*const fn (u32, i32, i32, i32) callconv(.c) void, &ctx.drawArraysInstanced, get_proc_address_fn, "glDrawArraysInstanced");
+    try assignProc(*const fn (i32, [*]const u32) callconv(.c) void, &ctx.drawBuffers, get_proc_address_fn, "glDrawBuffers");
+    try assignProc(*const fn (u32, i32, u32, ?*const anyopaque, i32) callconv(.c) void, &ctx.drawElementsInstanced, get_proc_address_fn, "glDrawElementsInstanced");
+    try assignProc(*const fn (u32, u32, u32, i32, u32, ?*const anyopaque) callconv(.c) void, &ctx.drawRangeElements, get_proc_address_fn, "glDrawRangeElements");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.end_query, get_proc_address_fn, "glEndQuery");
+    try assignProc(*const fn () callconv(.c) void, &ctx.end_transform_feedback, get_proc_address_fn, "glEndTransformFeedback");
+    try assignProc(*const fn (u32, u32) callconv(.c) types.Sync, &ctx.fence_sync, get_proc_address_fn, "glFenceSync");
+    try assignProc(*const fn (u32, isize, isize) callconv(.c) void, &ctx.flush_mapped_buffer_range, get_proc_address_fn, "glFlushMappedBufferRange");
+    try assignProc(*const fn (u32, u32, u32, i32, i32) callconv(.c) void, &ctx.framebuffer_texture_layer, get_proc_address_fn, "glFramebufferTextureLayer");
+    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_queries, get_proc_address_fn, "glGenQueries");
+    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_samplers, get_proc_address_fn, "glGenSamplers");
+    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_transform_feedbacks, get_proc_address_fn, "glGenTransformFeedbacks");
+    try assignProc(*const fn (i32, [*]u32) callconv(.c) void, &ctx.gen_vertex_arrays, get_proc_address_fn, "glGenVertexArrays");
+    try assignProc(*const fn (u32, u32, i32, ?*i32, [*]u8) callconv(.c) void, &ctx.getActiveUniformBlockName, get_proc_address_fn, "glGetActiveUniformBlockName");
+    try assignProc(*const fn (u32, u32, u32, [*]i32) callconv(.c) void, &ctx.get_active_uniform_block_iv, get_proc_address_fn, "glGetActiveUniformBlockiv");
+    try assignProc(*const fn (u32, i32, [*]const u32, u32, [*]i32) callconv(.c) void, &ctx.get_active_uniforms_iv, get_proc_address_fn, "glGetActiveUniformsiv");
+    try assignProc(*const fn (u32, u32, [*]i64) callconv(.c) void, &ctx.get_buffer_parameter_i64_v, get_proc_address_fn, "glGetBufferParameteri64v");
+    try assignProc(*const fn (u32, u32, ?*?*anyopaque) callconv(.c) void, &ctx.get_buffer_pointer_v, get_proc_address_fn, "glGetBufferPointerv");
+    try assignProc(*const fn (u32, [*:0]const u8) callconv(.c) i32, &ctx.getFragDataLocation, get_proc_address_fn, "glGetFragDataLocation");
+    try assignProc(*const fn (u32, u32, [*]i64) callconv(.c) void, &ctx.get_integer64_i_v, get_proc_address_fn, "glGetInteger64i_v");
+    try assignProc(*const fn (u32, [*]i64) callconv(.c) void, &ctx.get_integer64_v, get_proc_address_fn, "glGetInteger64v");
+    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_integer_i_v, get_proc_address_fn, "glGetIntegeri_v");
+    try assignProc(*const fn (u32, u32, u32, i32, [*]i32) callconv(.c) void, &ctx.get_internalformat_iv, get_proc_address_fn, "glGetInternalformativ");
+    try assignProc(*const fn (u32, i32, ?*i32, ?*u32, ?*anyopaque) callconv(.c) void, &ctx.get_program_binary, get_proc_address_fn, "glGetProgramBinary");
+    try assignProc(*const fn (u32, u32, [*]u32) callconv(.c) void, &ctx.get_query_object_uiv, get_proc_address_fn, "glGetQueryObjectuiv");
+    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_query_iv, get_proc_address_fn, "glGetQueryiv");
+    try assignProc(*const fn (u32, u32, [*]f32) callconv(.c) void, &ctx.get_sampler_parameter_fv, get_proc_address_fn, "glGetSamplerParameterfv");
+    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_sampler_parameter_iv, get_proc_address_fn, "glGetSamplerParameteriv");
+    try assignProc(*const fn (u32, u32) callconv(.c) ?[*:0]const u8, &ctx.getStringI, get_proc_address_fn, "glGetStringi");
+    try assignProc(*const fn (types.Sync, u32, i32, ?*i32, [*]i32) callconv(.c) void, &ctx.get_sync_iv, get_proc_address_fn, "glGetSynciv");
+    try assignProc(*const fn (u32, u32, i32, ?*i32, ?*i32, ?*u32, [*]u8) callconv(.c) void, &ctx.get_transform_feedback_varying, get_proc_address_fn, "glGetTransformFeedbackVarying");
+    try assignProc(*const fn (u32, [*:0]const u8) callconv(.c) u32, &ctx.get_uniform_block_index, get_proc_address_fn, "glGetUniformBlockIndex");
+    try assignProc(*const fn (u32, i32, [*]const [*:0]const u8, [*]u32) callconv(.c) void, &ctx.get_uniform_indices, get_proc_address_fn, "glGetUniformIndices");
+    try assignProc(*const fn (u32, i32, [*]u32) callconv(.c) void, &ctx.get_uniform_uiv, get_proc_address_fn, "glGetUniformuiv");
+    try assignProc(*const fn (u32, u32, [*]i32) callconv(.c) void, &ctx.get_vertex_attrib_i_iv, get_proc_address_fn, "glGetVertexAttribIiv");
+    try assignProc(*const fn (u32, u32, [*]u32) callconv(.c) void, &ctx.get_vertex_attrib_i_uiv, get_proc_address_fn, "glGetVertexAttribIuiv");
+    try assignProc(*const fn (u32, i32, [*]const u32) callconv(.c) void, &ctx.invalidate_framebuffer, get_proc_address_fn, "glInvalidateFramebuffer");
+    try assignProc(*const fn (u32, i32, [*]const u32, i32, i32, i32, i32) callconv(.c) void, &ctx.invalidate_sub_framebuffer, get_proc_address_fn, "glInvalidateSubFramebuffer");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isQuery, get_proc_address_fn, "glIsQuery");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isSampler, get_proc_address_fn, "glIsSampler");
+    try assignProc(*const fn (types.Sync) callconv(.c) u8, &ctx.isSync, get_proc_address_fn, "glIsSync");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isTransformFeedback, get_proc_address_fn, "glIsTransformFeedback");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.isVertexArray, get_proc_address_fn, "glIsVertexArray");
+    try assignProc(*const fn (u32, isize, isize, u32) callconv(.c) ?*anyopaque, &ctx.map_buffer_range, get_proc_address_fn, "glMapBufferRange");
+    try assignProc(*const fn () callconv(.c) void, &ctx.pause_transform_feedback, get_proc_address_fn, "glPauseTransformFeedback");
+    try assignProc(*const fn (u32, u32, ?*const anyopaque, i32) callconv(.c) void, &ctx.programBinary, get_proc_address_fn, "glProgramBinary");
+    try assignProc(*const fn (u32, u32, i32) callconv(.c) void, &ctx.programParameterI, get_proc_address_fn, "glProgramParameteri");
+    try assignProc(*const fn (u32) callconv(.c) void, &ctx.readBuffer, get_proc_address_fn, "glReadBuffer");
+    try assignProc(*const fn (u32, i32, u32, i32, i32) callconv(.c) void, &ctx.renderbuffer_storage_multisample, get_proc_address_fn, "glRenderbufferStorageMultisample");
+    try assignProc(*const fn () callconv(.c) void, &ctx.resume_transform_feedback, get_proc_address_fn, "glResumeTransformFeedback");
+    try assignProc(*const fn (u32, u32, f32) callconv(.c) void, &ctx.sampler_parameter_f, get_proc_address_fn, "glSamplerParameterf");
+    try assignProc(*const fn (u32, u32, [*]const f32) callconv(.c) void, &ctx.sampler_parameter_fv, get_proc_address_fn, "glSamplerParameterfv");
+    try assignProc(*const fn (u32, u32, i32) callconv(.c) void, &ctx.sampler_parameter_i, get_proc_address_fn, "glSamplerParameteri");
+    try assignProc(*const fn (u32, u32, [*]const i32) callconv(.c) void, &ctx.sampler_parameter_iv, get_proc_address_fn, "glSamplerParameteriv");
+    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, i32, u32, u32, ?*const anyopaque) callconv(.c) void, &ctx.tex_image_3d, get_proc_address_fn, "glTexImage3D");
+    try assignProc(*const fn (u32, i32, u32, i32, i32) callconv(.c) void, &ctx.tex_storage_2d, get_proc_address_fn, "glTexStorage2D");
+    try assignProc(*const fn (u32, i32, u32, i32, i32, i32) callconv(.c) void, &ctx.tex_storage_3d, get_proc_address_fn, "glTexStorage3D");
+    try assignProc(*const fn (u32, i32, i32, i32, i32, i32, i32, i32, u32, u32, ?*const anyopaque) callconv(.c) void, &ctx.tex_sub_image_3d, get_proc_address_fn, "glTexSubImage3D");
+    try assignProc(*const fn (u32, i32, [*]const [*:0]const u8, u32) callconv(.c) void, &ctx.transform_feedback_varyings, get_proc_address_fn, "glTransformFeedbackVaryings");
+    try assignProc(*const fn (i32, u32) callconv(.c) void, &ctx.uniform1ui, get_proc_address_fn, "glUniform1ui");
+    try assignProc(*const fn (i32, i32, [*]const u32) callconv(.c) void, &ctx.uniform1uiv, get_proc_address_fn, "glUniform1uiv");
+    try assignProc(*const fn (i32, u32, u32) callconv(.c) void, &ctx.uniform2ui, get_proc_address_fn, "glUniform2ui");
+    try assignProc(*const fn (i32, i32, [*]const u32) callconv(.c) void, &ctx.uniform2uiv, get_proc_address_fn, "glUniform2uiv");
+    try assignProc(*const fn (i32, u32, u32, u32) callconv(.c) void, &ctx.uniform3ui, get_proc_address_fn, "glUniform3ui");
+    try assignProc(*const fn (i32, i32, [*]const u32) callconv(.c) void, &ctx.uniform3uiv, get_proc_address_fn, "glUniform3uiv");
+    try assignProc(*const fn (i32, u32, u32, u32, u32) callconv(.c) void, &ctx.uniform4ui, get_proc_address_fn, "glUniform4ui");
+    try assignProc(*const fn (i32, i32, [*]const u32) callconv(.c) void, &ctx.uniform4uiv, get_proc_address_fn, "glUniform4uiv");
+    try assignProc(*const fn (u32, u32, u32) callconv(.c) void, &ctx.uniform_block_binding, get_proc_address_fn, "glUniformBlockBinding");
+    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix2x3fv, get_proc_address_fn, "glUniformMatrix2x3fv");
+    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix2x4fv, get_proc_address_fn, "glUniformMatrix2x4fv");
+    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix3x2fv, get_proc_address_fn, "glUniformMatrix3x2fv");
+    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix3x4fv, get_proc_address_fn, "glUniformMatrix3x4fv");
+    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix4x2fv, get_proc_address_fn, "glUniformMatrix4x2fv");
+    try assignProc(*const fn (i32, i32, u8, [*]const f32) callconv(.c) void, &ctx.uniformMatrix4x3fv, get_proc_address_fn, "glUniformMatrix4x3fv");
+    try assignProc(*const fn (u32) callconv(.c) u8, &ctx.unmap_buffer, get_proc_address_fn, "glUnmapBuffer");
+    try assignProc(*const fn (u32, u32) callconv(.c) void, &ctx.vertex_attrib_divisor, get_proc_address_fn, "glVertexAttribDivisor");
+    try assignProc(*const fn (u32, i32, i32, i32, i32) callconv(.c) void, &ctx.vertexAttribI4i, get_proc_address_fn, "glVertexAttribI4i");
+    try assignProc(*const fn (u32, [*]const i32) callconv(.c) void, &ctx.vertexAttribI4iv, get_proc_address_fn, "glVertexAttribI4iv");
+    try assignProc(*const fn (u32, u32, u32, u32, u32) callconv(.c) void, &ctx.vertexAttribI4ui, get_proc_address_fn, "glVertexAttribI4ui");
+    try assignProc(*const fn (u32, [*]const u32) callconv(.c) void, &ctx.vertexAttribI4uiv, get_proc_address_fn, "glVertexAttribI4uiv");
+    try assignProc(*const fn (u32, i32, u32, i32, ?*const anyopaque) callconv(.c) void, &ctx.vertex_attrib_i_pointer, get_proc_address_fn, "glVertexAttribIPointer");
+    try assignProc(*const fn (types.Sync, u32, u64) callconv(.c) void, &ctx.wait_sync, get_proc_address_fn, "glWaitSync");
 }
