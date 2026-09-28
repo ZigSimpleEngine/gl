@@ -45,6 +45,13 @@ pub const VertexAttribParameter = enum(u32) {
     /// Current constant values of the attribute ([`float`] ×4,
     /// `GL_CURRENT_VERTEX_ATTRIB`).
     current_vertex_attrib = 0x8626,
+
+    /// Client-side pointer recorded by [`pointer`](pointer)
+    /// (`GL_VERTEX_ATTRIB_ARRAY_POINTER`).
+    ///
+    /// The only parameter accepted by [`getPointer`](getPointer)
+    /// (`glGetVertexAttribPointerv` rejects every other enumerant).
+    vertex_attrib_array_pointer = 0x8645,
 };
 
 /// Enables the attribute array at `index` (port of

@@ -36,6 +36,7 @@
 //! - [`types`](types) — primitive GL types;
 //! - [`enums`](enums) — shared enumerations;
 //! - [`state`](state) — global state: capabilities, getters, hints;
+//! - [`state_parameters`](state_parameters) — typed WebGL-style helpers over global state;
 //! - [`viewport`](viewport) — viewport rectangle;
 //! - [`clear`](clear) — clear values and clear operations;
 //! - [`blending`](blending) — color blending;
@@ -99,6 +100,7 @@ pub const types = @import("types.zig");
 pub const enums = @import("enums.zig");
 pub const loader = @import("loader.zig");
 pub const state = @import("state.zig");
+pub const state_parameters = @import("state_parameters.zig");
 pub const viewport = @import("viewport.zig");
 pub const clear = @import("clear.zig");
 pub const blending = @import("blending.zig");

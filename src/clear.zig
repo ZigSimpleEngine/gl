@@ -19,6 +19,11 @@ pub const Buffer = enum(u32) {
 
     /// The stencil buffer (`GL_STENCIL`).
     stencil = 0x1802,
+
+    /// Combined depth and stencil buffer (`GL_DEPTH_STENCIL`).
+    ///
+    /// The only buffer token accepted by [`clearBufferFi`](clearBufferFi).
+    depth_stencil = 0x84F9,
 };
 
 /// Clears the selected buffers of the currently bound framebuffer
@@ -86,9 +91,8 @@ pub fn clearBufferUiv(buffer: Buffer, drawbuffer: i32, value: [*]const u32) void
 
 /// Clears the depth and stencil buffers at once (port of `glClearBufferfi`).
 ///
-/// `buffer` must be [`Buffer.depth`](Buffer.depth) or
-/// [`Buffer.stencil`](Buffer.stencil); `stencil` is only used when the depth
-/// buffer is cleared.
+/// `buffer` must be [`Buffer.depth_stencil`](Buffer.depth_stencil); it is
+/// the only token `glClearBufferfi` accepts.
 pub fn clearBufferFi(buffer: Buffer, drawbuffer: i32, depth: f32, stencil: i32) void {
     loader.context.clearBufferFi(@intFromEnum(buffer), drawbuffer, depth, stencil);
 }

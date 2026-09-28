@@ -4,7 +4,12 @@
     .fingerprint = 0x2f61c2eca2838983,
     .minimum_zig_version = "0.16.0",
 
-    .dependencies = .{},
+    .dependencies = .{
+        // Optional, test-only: local rgfw checkout used to open a real GPU
+        // context for `zig build test`. Resolved lazily in build.zig
+        // only when the directory exists; consumers of `gl` never need it.
+        .rgfw = .{ .path = "../rgfw" },
+    },
 
     .paths = .{
         "build.zig",
