@@ -29,6 +29,12 @@ pub const Capability = enum(u32) {
     /// Apply a depth offset to filled polygons (`GL_POLYGON_OFFSET_FILL`).
     polygon_offset_fill = 0x8037,
 
+    /// Use multiple fragment samples in computing the final color of a
+    /// pixel (`GL_MULTISAMPLE`). Enabled by default on desktop OpenGL;
+    /// not a valid capability on OpenGL ES 3.0 (using it there generates
+    /// `GL_INVALID_ENUM`).
+    multisample = 0x809D,
+
     /// Enable alpha-to-coverage multisampling (`GL_SAMPLE_ALPHA_TO_COVERAGE`).
     sample_alpha_to_coverage = 0x809E,
 
