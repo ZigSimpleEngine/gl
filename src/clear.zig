@@ -66,7 +66,7 @@ pub fn clearStencil(value: i32) void {
 /// color output (0 for the first). The value array contains the RGBA
 /// components.
 pub fn clearBufferFv(buffer: Buffer, drawbuffer: i32, value: [*]const f32) void {
-    loader.context.clearBufferFv(@intFromEnum(buffer), drawbuffer, value);
+    loader.context.clearBufferFv(@backingInt(buffer), drawbuffer, value);
 }
 
 /// Clears a single buffer at the given draw buffer index with an
@@ -76,7 +76,7 @@ pub fn clearBufferFv(buffer: Buffer, drawbuffer: i32, value: [*]const f32) void 
 /// color output (0 for the first). The value array contains the RGBA
 /// components (signed).
 pub fn clearBufferIv(buffer: Buffer, drawbuffer: i32, value: [*]const i32) void {
-    loader.context.clearBufferIv(@intFromEnum(buffer), drawbuffer, value);
+    loader.context.clearBufferIv(@backingInt(buffer), drawbuffer, value);
 }
 
 /// Clears a single buffer at the given draw buffer index with an
@@ -86,7 +86,7 @@ pub fn clearBufferIv(buffer: Buffer, drawbuffer: i32, value: [*]const i32) void 
 /// color output (0 for the first). The value array contains the RGBA
 /// components (unsigned).
 pub fn clearBufferUiv(buffer: Buffer, drawbuffer: i32, value: [*]const u32) void {
-    loader.context.clearBufferUiv(@intFromEnum(buffer), drawbuffer, value);
+    loader.context.clearBufferUiv(@backingInt(buffer), drawbuffer, value);
 }
 
 /// Clears the depth and stencil buffers at once (port of `glClearBufferfi`).
@@ -94,5 +94,5 @@ pub fn clearBufferUiv(buffer: Buffer, drawbuffer: i32, value: [*]const u32) void
 /// `buffer` must be [`Buffer.depth_stencil`](Buffer.depth_stencil); it is
 /// the only token `glClearBufferfi` accepts.
 pub fn clearBufferFi(buffer: Buffer, drawbuffer: i32, depth: f32, stencil: i32) void {
-    loader.context.clearBufferFi(@intFromEnum(buffer), drawbuffer, depth, stencil);
+    loader.context.clearBufferFi(@backingInt(buffer), drawbuffer, depth, stencil);
 }

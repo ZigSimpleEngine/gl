@@ -184,7 +184,7 @@ pub fn getFragDataLocation(program: u32, name: [:0]const u8) i32 {
 
 /// Reads a parameter of the program (port of `glGetProgramiv`).
 pub fn getParameter(program: u32, pname: ProgramParameter, params: [*]i32) void {
-    loader.context.get_program_iv(program, @intFromEnum(pname), params);
+    loader.context.get_program_iv(program, @backingInt(pname), params);
 }
 
 /// Retrieves the link log of the program into `buf` (port of
@@ -266,5 +266,5 @@ pub fn programBinary(program: u32, format: u32, binary: ?*const anyopaque, lengt
 /// Sets a program parameter such as the binary retrievability hint (port of
 /// `glProgramParameteri`).
 pub fn programParameterI(program: u32, pname: ProgramParameter, value: i32) void {
-    loader.context.programParameterI(program, @intFromEnum(pname), value);
+    loader.context.programParameterI(program, @backingInt(pname), value);
 }

@@ -639,17 +639,17 @@ pub const GetPName = enum(u32) {
 /// gl.state.enable(.blend);
 /// ```
 pub fn enable(cap: Capability) void {
-    loader.context.enable(@intFromEnum(cap));
+    loader.context.enable(@backingInt(cap));
 }
 
 /// Disables the given capability.
 pub fn disable(cap: Capability) void {
-    loader.context.disable(@intFromEnum(cap));
+    loader.context.disable(@backingInt(cap));
 }
 
 /// Returns whether the given capability is currently enabled.
 pub fn isEnabled(cap: Capability) bool {
-    return loader.context.isEnabled(@intFromEnum(cap)) != 0;
+    return loader.context.isEnabled(@backingInt(cap)) != 0;
 }
 
 /// Reads a boolean-valued parameter of the global state.
@@ -658,17 +658,17 @@ pub fn isEnabled(cap: Capability) bool {
 /// `pname` (one item for single-valued parameters, more for e.g.
 /// `GL_COLOR_WRITEMASK`).
 pub fn getBoolean(pname: GetPName, data: [*]u8) void {
-    loader.context.get_boolean_v(@intFromEnum(pname), data);
+    loader.context.get_boolean_v(@backingInt(pname), data);
 }
 
 /// Reads an integer-valued parameter of the global state.
 pub fn getInteger(pname: GetPName, data: [*]i32) void {
-    loader.context.get_integer_v(@intFromEnum(pname), data);
+    loader.context.get_integer_v(@backingInt(pname), data);
 }
 
 /// Reads a 64-bit integer-valued parameter of the global state.
 pub fn getInteger64(pname: GetPName, data: [*]i64) void {
-    loader.context.get_integer64_v(@intFromEnum(pname), data);
+    loader.context.get_integer64_v(@backingInt(pname), data);
 }
 
 /// Reads an indexed integer-valued parameter of the global state
@@ -692,7 +692,7 @@ pub fn getInteger64I(target: u32, index: u32, data: [*]i64) void {
 
 /// Reads a floating-point valued parameter of the global state.
 pub fn getFloat(pname: GetPName, data: [*]f32) void {
-    loader.context.get_float_v(@intFromEnum(pname), data);
+    loader.context.get_float_v(@backingInt(pname), data);
 }
 
 /// Retrieves a version, vendor or extension string of the context
@@ -706,7 +706,7 @@ pub fn getFloat(pname: GetPName, data: [*]f32) void {
 /// const version = gl.state.getString(.version) orelse "unknown";
 /// ```
 pub fn getString(name: StringName) ?[:0]const u8 {
-    const ptr = loader.context.getString(@intFromEnum(name));
+    const ptr = loader.context.getString(@backingInt(name));
     if (ptr == null) return null;
     return std.mem.sliceTo(ptr.?, 0);
 }
@@ -716,14 +716,14 @@ pub fn getString(name: StringName) ?[:0]const u8 {
 /// The index ranges over `[0, GL_NUM_EXTENSIONS)`; the extension names can
 /// also be tested directly with [`loader.hasExtension`](loader.hasExtension).
 pub fn getStringI(name: StringName, index: u32) ?[:0]const u8 {
-    const ptr = loader.context.getStringI(@intFromEnum(name), index);
+    const ptr = loader.context.getStringI(@backingInt(name), index);
     if (ptr == null) return null;
     return std.mem.sliceTo(ptr.?, 0);
 }
 
 /// Suggests quality-versus-performance preferences for a given hint target.
 pub fn hint(target: HintTarget, mode: HintMode) void {
-    loader.context.hint(@intFromEnum(target), @intFromEnum(mode));
+    loader.context.hint(@backingInt(target), @backingInt(mode));
 }
 
 /// Blocks until all previously submitted GL commands have completed.

@@ -550,12 +550,12 @@ pub fn isTexture(texture: u32) bool {
 /// gl.textures.activeTexture(.texture0);
 /// ```
 pub fn activeTexture(unit: TextureUnit) void {
-    loader.context.activeTexture(@intFromEnum(unit));
+    loader.context.activeTexture(@backingInt(unit));
 }
 
 /// Binds the texture to the given target (port of `glBindTexture`).
 pub fn bind(target: TextureTarget, texture: u32) void {
-    loader.context.bind_texture(@intFromEnum(target), texture);
+    loader.context.bind_texture(@backingInt(target), texture);
 }
 
 /// Generates mipmaps for the bound texture (port of `glGenerateMipmap`).
@@ -564,7 +564,7 @@ pub fn bind(target: TextureTarget, texture: u32) void {
 /// [`storage2d`](storage2d); the generated levels are needed for the
 /// mipmapped minification filters.
 pub fn generateMipmap(target: TextureTarget) void {
-    loader.context.generateMipmap(@intFromEnum(target));
+    loader.context.generateMipmap(@backingInt(target));
 }
 
 /// Uploads a 2D texture image (port of `glTexImage2D`).
@@ -589,14 +589,14 @@ pub fn image2d(
     pixels: ?*const anyopaque,
 ) void {
     loader.context.tex_image_2d(
-        @intFromEnum(target),
+        @backingInt(target),
         level,
-        @intCast(@intFromEnum(internalformat)),
+        @intCast(@backingInt(internalformat)),
         width,
         height,
         border,
-        @intFromEnum(format),
-        @intFromEnum(kind),
+        @backingInt(format),
+        @backingInt(kind),
         pixels,
     );
 }
@@ -618,15 +618,15 @@ pub fn image3d(
     pixels: ?*const anyopaque,
 ) void {
     loader.context.tex_image_3d(
-        @intFromEnum(target),
+        @backingInt(target),
         level,
-        @intCast(@intFromEnum(internalformat)),
+        @intCast(@backingInt(internalformat)),
         width,
         height,
         depth,
         border,
-        @intFromEnum(format),
-        @intFromEnum(kind),
+        @backingInt(format),
+        @backingInt(kind),
         pixels,
     );
 }
@@ -644,14 +644,14 @@ pub fn subImage2d(
     pixels: ?*const anyopaque,
 ) void {
     loader.context.tex_sub_image_2d(
-        @intFromEnum(target),
+        @backingInt(target),
         level,
         xoffset,
         yoffset,
         width,
         height,
-        @intFromEnum(format),
-        @intFromEnum(kind),
+        @backingInt(format),
+        @backingInt(kind),
         pixels,
     );
 }
@@ -671,7 +671,7 @@ pub fn subImage3d(
     pixels: ?*const anyopaque,
 ) void {
     loader.context.tex_sub_image_3d(
-        @intFromEnum(target),
+        @backingInt(target),
         level,
         xoffset,
         yoffset,
@@ -679,8 +679,8 @@ pub fn subImage3d(
         width,
         height,
         depth,
-        @intFromEnum(format),
-        @intFromEnum(kind),
+        @backingInt(format),
+        @backingInt(kind),
         pixels,
     );
 }
@@ -699,9 +699,9 @@ pub fn storage2d(
     height: i32,
 ) void {
     loader.context.tex_storage_2d(
-        @intFromEnum(target),
+        @backingInt(target),
         levels,
-        @intFromEnum(internalformat),
+        @backingInt(internalformat),
         width,
         height,
     );
@@ -718,9 +718,9 @@ pub fn storage3d(
     depth: i32,
 ) void {
     loader.context.tex_storage_3d(
-        @intFromEnum(target),
+        @backingInt(target),
         levels,
-        @intFromEnum(internalformat),
+        @backingInt(internalformat),
         width,
         height,
         depth,
@@ -740,9 +740,9 @@ pub fn copyImage2d(
     border: i32,
 ) void {
     loader.context.copy_tex_image_2d(
-        @intFromEnum(target),
+        @backingInt(target),
         level,
-        @intFromEnum(internalformat),
+        @backingInt(internalformat),
         x,
         y,
         width,
@@ -763,7 +763,7 @@ pub fn copySubImage2d(
     width: i32,
     height: i32,
 ) void {
-    loader.context.copy_tex_sub_image_2d(@intFromEnum(target), level, xoffset, yoffset, x, y, width, height);
+    loader.context.copy_tex_sub_image_2d(@backingInt(target), level, xoffset, yoffset, x, y, width, height);
 }
 
 /// Copies a rectangle from the framebuffer into a 3D texture subimage
@@ -779,7 +779,7 @@ pub fn copySubImage3d(
     width: i32,
     height: i32,
 ) void {
-    loader.context.copy_tex_sub_image_3d(@intFromEnum(target), level, xoffset, yoffset, zoffset, x, y, width, height);
+    loader.context.copy_tex_sub_image_3d(@backingInt(target), level, xoffset, yoffset, zoffset, x, y, width, height);
 }
 
 /// Uploads a compressed 2D texture image (port of `glCompressedTexImage2D`).
@@ -797,9 +797,9 @@ pub fn compressedImage2d(
     data: ?*const anyopaque,
 ) void {
     loader.context.compressed_tex_image_2d(
-        @intFromEnum(target),
+        @backingInt(target),
         level,
-        @intFromEnum(internalformat),
+        @backingInt(internalformat),
         width,
         height,
         border,
@@ -821,9 +821,9 @@ pub fn compressedImage3d(
     data: ?*const anyopaque,
 ) void {
     loader.context.compressed_tex_image_3d(
-        @intFromEnum(target),
+        @backingInt(target),
         level,
-        @intFromEnum(internalformat),
+        @backingInt(internalformat),
         width,
         height,
         depth,
@@ -847,13 +847,13 @@ pub fn compressedSubImage2d(
     data: ?*const anyopaque,
 ) void {
     loader.context.compressed_tex_sub_image_2d(
-        @intFromEnum(target),
+        @backingInt(target),
         level,
         xoffset,
         yoffset,
         width,
         height,
-        @intFromEnum(format),
+        @backingInt(format),
         image_size,
         data,
     );
@@ -875,7 +875,7 @@ pub fn compressedSubImage3d(
     data: ?*const anyopaque,
 ) void {
     loader.context.compressed_tex_sub_image_3d(
-        @intFromEnum(target),
+        @backingInt(target),
         level,
         xoffset,
         yoffset,
@@ -883,7 +883,7 @@ pub fn compressedSubImage3d(
         width,
         height,
         depth,
-        @intFromEnum(format),
+        @backingInt(format),
         image_size,
         data,
     );
@@ -893,38 +893,38 @@ pub fn compressedSubImage3d(
 /// `glTexParameteri`).
 ///
 /// ```
-/// gl.textures.parameterI(.texture_2d, .texture_min_filter, @intFromEnum(.linear_mipmap_linear));
+/// gl.textures.parameterI(.texture_2d, .texture_min_filter, @backingInt(.linear_mipmap_linear));
 /// ```
 pub fn parameterI(target: TextureTarget, pname: TextureParameter, param: i32) void {
-    loader.context.tex_parameter_i(@intFromEnum(target), @intFromEnum(pname), param);
+    loader.context.tex_parameter_i(@backingInt(target), @backingInt(pname), param);
 }
 
 /// Sets a floating-point parameter of the bound texture (port of
 /// `glTexParameterf`).
 pub fn parameterF(target: TextureTarget, pname: TextureParameter, param: f32) void {
-    loader.context.tex_parameter_f(@intFromEnum(target), @intFromEnum(pname), param);
+    loader.context.tex_parameter_f(@backingInt(target), @backingInt(pname), param);
 }
 
 /// Sets an array of integer parameters of the bound texture (port of
 /// `glTexParameteriv`).
 pub fn parameterIv(target: TextureTarget, pname: TextureParameter, params: [*]const i32) void {
-    loader.context.tex_parameter_iv(@intFromEnum(target), @intFromEnum(pname), params);
+    loader.context.tex_parameter_iv(@backingInt(target), @backingInt(pname), params);
 }
 
 /// Sets an array of floating-point parameters of the bound texture (port of
 /// `glTexParameterfv`).
 pub fn parameterFv(target: TextureTarget, pname: TextureParameter, params: [*]const f32) void {
-    loader.context.tex_parameter_fv(@intFromEnum(target), @intFromEnum(pname), params);
+    loader.context.tex_parameter_fv(@backingInt(target), @backingInt(pname), params);
 }
 
 /// Reads an integer-valued parameter of the bound texture (port of
 /// `glGetTexParameteriv`).
 pub fn getParameterI(target: TextureTarget, pname: TextureParameter, params: [*]i32) void {
-    loader.context.get_tex_parameter_iv(@intFromEnum(target), @intFromEnum(pname), params);
+    loader.context.get_tex_parameter_iv(@backingInt(target), @backingInt(pname), params);
 }
 
 /// Reads a floating-point parameter of the bound texture (port of
 /// `glGetTexParameterfv`).
 pub fn getParameterF(target: TextureTarget, pname: TextureParameter, params: [*]f32) void {
-    loader.context.get_tex_parameter_fv(@intFromEnum(target), @intFromEnum(pname), params);
+    loader.context.get_tex_parameter_fv(@backingInt(target), @backingInt(pname), params);
 }

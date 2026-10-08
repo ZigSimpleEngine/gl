@@ -40,14 +40,14 @@ pub fn main() !void {
     // Showcase of the typed enumerations — no GL calls are involved here.
     const mask = gl.enums.BufferMask{ .color = true, .depth = true };
     std.debug.print("clear mask bits: 0x{X:0>8}\n", .{mask.bits()});
-    std.debug.print("GL_MAX_TEXTURE_SIZE = 0x{X}\n", .{@intFromEnum(gl.state.GetPName.max_texture_size)});
+    std.debug.print("GL_MAX_TEXTURE_SIZE = 0x{X}\n", .{@backingInt(gl.state.GetPName.max_texture_size)});
 }
 
 test "enum values match the OpenGL ES 3.0 specification" {
-    try std.testing.expectEqual(@as(u32, 0x0500), @intFromEnum(gl.enums.ErrorCode.invalid_enum));
-    try std.testing.expectEqual(@as(u32, 0x1406), @intFromEnum(gl.enums.DataType.float));
-    try std.testing.expectEqual(@as(u32, 0x0201), @intFromEnum(gl.enums.Comparison.less));
-    try std.testing.expectEqual(@as(u32, 0x0404), @intFromEnum(gl.enums.Face.front));
+    try std.testing.expectEqual(@as(u32, 0x0500), @backingInt(gl.enums.ErrorCode.invalid_enum));
+    try std.testing.expectEqual(@as(u32, 0x1406), @backingInt(gl.enums.DataType.float));
+    try std.testing.expectEqual(@as(u32, 0x0201), @backingInt(gl.enums.Comparison.less));
+    try std.testing.expectEqual(@as(u32, 0x0404), @backingInt(gl.enums.Face.front));
 }
 
 test "buffer mask bit values" {

@@ -162,7 +162,7 @@ pub fn isBuffer(buffer: u32) bool {
 /// Binding a buffer to `GL_ARRAY_BUFFER` or `GL_ELEMENT_ARRAY_BUFFER`
 /// associates its data with the current vertex array.
 pub fn bind(target: BufferTarget, buffer: u32) void {
-    loader.context.bind_buffer(@intFromEnum(target), buffer);
+    loader.context.bind_buffer(@backingInt(target), buffer);
 }
 
 /// Binds the buffer to the given indexed binding point of the target
@@ -171,7 +171,7 @@ pub fn bind(target: BufferTarget, buffer: u32) void {
 /// Used for `GL_UNIFORM_BUFFER` and `GL_TRANSFORM_FEEDBACK_BUFFER` binding
 /// points.
 pub fn bindBase(target: BufferTarget, index: u32, buffer: u32) void {
-    loader.context.bind_buffer_base(@intFromEnum(target), index, buffer);
+    loader.context.bind_buffer_base(@backingInt(target), index, buffer);
 }
 
 /// Binds a subrange of the buffer to the given indexed binding point
@@ -180,7 +180,7 @@ pub fn bindBase(target: BufferTarget, index: u32, buffer: u32) void {
 /// `offset` and `size` are in bytes; `offset` must be aligned according to
 /// `GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT` for uniform buffers.
 pub fn bindRange(target: BufferTarget, index: u32, buffer: u32, offset: types.Intptr, size: types.Sizeiptr) void {
-    loader.context.bind_buffer_range(@intFromEnum(target), index, buffer, offset, size);
+    loader.context.bind_buffer_range(@backingInt(target), index, buffer, offset, size);
 }
 
 /// Uploads raw data into the buffer (port of `glBufferData`).
@@ -188,7 +188,7 @@ pub fn bindRange(target: BufferTarget, index: u32, buffer: u32, offset: types.In
 /// Reallocates the buffer storage; the previous contents are lost. Pass
 /// `null` with `size` to reserve storage without uploading data.
 pub fn bufferData(target: BufferTarget, size: usize, ptr: ?*const anyopaque, usage: BufferUsage) void {
-    loader.context.bufferData(@intFromEnum(target), @intCast(size), ptr, @intFromEnum(usage));
+    loader.context.bufferData(@backingInt(target), @intCast(size), ptr, @backingInt(usage));
 }
 
 /// Uploads a byte slice into the buffer (convenience wrapper over
@@ -198,18 +198,18 @@ pub fn bufferData(target: BufferTarget, size: usize, ptr: ?*const anyopaque, usa
 /// gl.buffers.bufferDataSlice(.array_buffer, vertices[0..], .static_draw);
 /// ```
 pub fn bufferDataSlice(target: BufferTarget, bytes: []const u8, usage: BufferUsage) void {
-    loader.context.bufferData(@intFromEnum(target), @intCast(bytes.len), bytes.ptr, @intFromEnum(usage));
+    loader.context.bufferData(@backingInt(target), @intCast(bytes.len), bytes.ptr, @backingInt(usage));
 }
 
 /// Uploads raw data into a subrange of the buffer (port of `glBufferSubData`).
 pub fn bufferSubData(target: BufferTarget, offset: usize, size: usize, ptr: ?*const anyopaque) void {
-    loader.context.bufferSubData(@intFromEnum(target), @intCast(offset), @intCast(size), ptr);
+    loader.context.bufferSubData(@backingInt(target), @intCast(offset), @intCast(size), ptr);
 }
 
 /// Uploads a byte slice into a subrange of the buffer (convenience wrapper
 /// over [`bufferSubData`](bufferSubData)).
 pub fn bufferSubDataSlice(target: BufferTarget, offset: usize, bytes: []const u8) void {
-    loader.context.bufferSubData(@intFromEnum(target), @intCast(offset), @intCast(bytes.len), bytes.ptr);
+    loader.context.bufferSubData(@backingInt(target), @intCast(offset), @intCast(bytes.len), bytes.ptr);
 }
 
 /// Copies `size` bytes between two buffers (port of `glCopyBufferSubData`).
@@ -221,8 +221,8 @@ pub fn copySubData(
     size: usize,
 ) void {
     loader.context.copy_buffer_sub_data(
-        @intFromEnum(read_target),
-        @intFromEnum(write_target),
+        @backingInt(read_target),
+        @backingInt(write_target),
         @intCast(read_offset),
         @intCast(write_offset),
         @intCast(size),
@@ -232,13 +232,13 @@ pub fn copySubData(
 /// Reads a parameter of the currently bound buffer (port of
 /// `glGetBufferParameteriv`).
 pub fn getParameter(target: BufferTarget, pname: BufferParameter, params: [*]i32) void {
-    loader.context.get_buffer_parameter_iv(@intFromEnum(target), @intFromEnum(pname), params);
+    loader.context.get_buffer_parameter_iv(@backingInt(target), @backingInt(pname), params);
 }
 
 /// Reads a 64-bit parameter of the currently bound buffer (port of
 /// `glGetBufferParameteri64v`).
 pub fn getParameter64(target: BufferTarget, pname: BufferParameter, params: [*]i64) void {
-    loader.context.get_buffer_parameter_i64_v(@intFromEnum(target), @intFromEnum(pname), params);
+    loader.context.get_buffer_parameter_i64_v(@backingInt(target), @backingInt(pname), params);
 }
 
 /// Maps the given range of the buffer for direct access (port of
@@ -251,18 +251,18 @@ pub fn getParameter64(target: BufferTarget, pname: BufferParameter, params: [*]i
 /// const ptr: ?[*]u8 = @ptrCast(gl.buffers.map(.array_buffer, 0, size, .{ .write = true }));
 /// ```
 pub fn map(target: BufferTarget, offset: usize, length: usize, access: MapAccess) ?*anyopaque {
-    return loader.context.map_buffer_range(@intFromEnum(target), @intCast(offset), @intCast(length), access.bits());
+    return loader.context.map_buffer_range(@backingInt(target), @intCast(offset), @intCast(length), access.bits());
 }
 
 /// Releases the mapping created by [`map`](map) (port of `glUnmapBuffer`).
 ///
 /// Returns `true` if the data was successfully written to the buffer.
 pub fn unmap(target: BufferTarget) bool {
-    return loader.context.unmap_buffer(@intFromEnum(target)) != 0;
+    return loader.context.unmap_buffer(@backingInt(target)) != 0;
 }
 
 /// Flushes the modified subrange of a mapped range created with the
 /// `GL_MAP_FLUSH_EXPLICIT_BIT` flag (port of `glFlushMappedBufferRange`).
 pub fn flushMappedRange(target: BufferTarget, offset: usize, length: usize) void {
-    loader.context.flush_mapped_buffer_range(@intFromEnum(target), @intCast(offset), @intCast(length));
+    loader.context.flush_mapped_buffer_range(@backingInt(target), @intCast(offset), @intCast(length));
 }

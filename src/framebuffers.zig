@@ -242,7 +242,7 @@ pub fn isFramebuffer(framebuffer: u32) bool {
 /// framebuffer is bound for both drawing and reading. Binding name `0`
 /// restores the default framebuffer.
 pub fn bind(target: FramebufferTarget, framebuffer: u32) void {
-    loader.context.bind_framebuffer(@intFromEnum(target), framebuffer);
+    loader.context.bind_framebuffer(@backingInt(target), framebuffer);
 }
 
 /// Returns the completeness status of the bound framebuffer (port of
@@ -252,7 +252,7 @@ pub fn bind(target: FramebufferTarget, framebuffer: u32) void {
 /// before rendering into the framebuffer; otherwise draw commands are
 /// ignored and `GL_INVALID_FRAMEBUFFER_OPERATION` is generated.
 pub fn checkStatus(target: FramebufferTarget) FramebufferStatus {
-    return @enumFromInt(loader.context.check_framebuffer_status(@intFromEnum(target)));
+    return @fromBackingInt(@intCast(loader.context.check_framebuffer_status(@backingInt(target))));
 }
 
 /// Attaches a renderbuffer to an attachment point of the bound framebuffer
@@ -263,8 +263,8 @@ pub fn attachRenderbuffer(
     renderbuffer: u32,
 ) void {
     loader.context.framebuffer_renderbuffer(
-        @intFromEnum(target),
-        @intFromEnum(attachment),
+        @backingInt(target),
+        @backingInt(attachment),
         0x8D41, // GL_RENDERBUFFER
         renderbuffer,
     );
@@ -287,9 +287,9 @@ pub fn attachTexture2d(
     level: i32,
 ) void {
     loader.context.framebuffer_texture_2d(
-        @intFromEnum(target),
-        @intFromEnum(attachment),
-        @intFromEnum(textarget),
+        @backingInt(target),
+        @backingInt(attachment),
+        @backingInt(textarget),
         texture,
         level,
     );
@@ -305,8 +305,8 @@ pub fn attachTextureLayer(
     layer: i32,
 ) void {
     loader.context.framebuffer_texture_layer(
-        @intFromEnum(target),
-        @intFromEnum(attachment),
+        @backingInt(target),
+        @backingInt(attachment),
         texture,
         level,
         layer,
@@ -322,9 +322,9 @@ pub fn getAttachmentParameter(
     params: [*]i32,
 ) void {
     loader.context.get_framebuffer_attachment_parameter_iv(
-        @intFromEnum(target),
-        @intFromEnum(attachment),
-        @intFromEnum(pname),
+        @backingInt(target),
+        @backingInt(attachment),
+        @backingInt(pname),
         params,
     );
 }
@@ -358,7 +358,7 @@ pub fn blit(
         dst_x1,
         dst_y1,
         mask.bits(),
-        @intFromEnum(filter),
+        @backingInt(filter),
     );
 }
 
@@ -381,7 +381,7 @@ pub fn drawBuffers(bufs: []const DrawBuffer) void {
 /// `attachments` holds raw `GLenum` values: `GL_COLOR`, `GL_DEPTH`,
 /// `GL_STENCIL`, `GL_DEPTH_STENCIL` or `GL_COLOR_ATTACHMENTi`.
 pub fn invalidate(target: FramebufferTarget, attachments: []const u32) void {
-    loader.context.invalidate_framebuffer(@intFromEnum(target), @intCast(attachments.len), attachments.ptr);
+    loader.context.invalidate_framebuffer(@backingInt(target), @intCast(attachments.len), attachments.ptr);
 }
 
 /// Discards the contents of the given attachments within a rectangle
@@ -395,7 +395,7 @@ pub fn invalidateSub(
     height: i32,
 ) void {
     loader.context.invalidate_sub_framebuffer(
-        @intFromEnum(target),
+        @backingInt(target),
         @intCast(attachments.len),
         attachments.ptr,
         x,

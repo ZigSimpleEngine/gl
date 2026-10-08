@@ -80,7 +80,7 @@ pub const timeout_ignored: u64 = 0xFFFFFFFFFFFFFFFF;
 /// defer gl.sync.delete(fence);
 /// ```
 pub fn fence(condition: FenceCondition, flags: u32) types.Sync {
-    return loader.context.fence_sync(@intFromEnum(condition), flags);
+    return loader.context.fence_sync(@backingInt(condition), flags);
 }
 
 /// Deletes the sync object (port of `glDeleteSync`).
@@ -108,7 +108,7 @@ pub fn getParameter(
     length: ?*i32,
     values: [*]i32,
 ) void {
-    loader.context.get_sync_iv(sync_obj, @intFromEnum(pname), count, length, values);
+    loader.context.get_sync_iv(sync_obj, @backingInt(pname), count, length, values);
 }
 
 /// Blocks the CPU until the sync object is signaled or the timeout in
@@ -122,7 +122,7 @@ pub fn getParameter(
 /// if (status == .condition_satisfied) { ... }
 /// ```
 pub fn clientWait(sync_obj: types.Sync, flags: u32, timeout_ns: u64) WaitResult {
-    return @enumFromInt(loader.context.client_wait_sync(sync_obj, flags, timeout_ns));
+    return @fromBackingInt(@intCast(loader.context.client_wait_sync(sync_obj, flags, timeout_ns)));
 }
 
 /// Blocks the CPU until the sync object is signaled (port of `glWaitSync`).

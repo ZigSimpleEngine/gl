@@ -69,17 +69,17 @@ pub fn isQuery(id: u32) bool {
 /// gl.queries.end(.any_samples_passed);
 /// ```
 pub fn begin(target: QueryTarget, id: u32) void {
-    loader.context.begin_query(@intFromEnum(target), id);
+    loader.context.begin_query(@backingInt(target), id);
 }
 
 /// Stops the active query on the target (port of `glEndQuery`).
 pub fn end(target: QueryTarget) void {
-    loader.context.end_query(@intFromEnum(target));
+    loader.context.end_query(@backingInt(target));
 }
 
 /// Reads a parameter of the given query (port of `glGetQueryObjectuiv`).
 pub fn getObject(id: u32, pname: QueryParameter, params: [*]u32) void {
-    loader.context.get_query_object_uiv(id, @intFromEnum(pname), params);
+    loader.context.get_query_object_uiv(id, @backingInt(pname), params);
 }
 
 /// Returns the result of the query into `params` (port of
@@ -103,5 +103,5 @@ pub fn resultIsAvailable(id: u32, params: [*]u32) void {
 /// Reads a parameter of the query active on the target (port of
 /// `glGetQueryiv`).
 pub fn getParameter(target: QueryTarget, pname: QueryParameter, params: [*]i32) void {
-    loader.context.get_query_iv(@intFromEnum(target), @intFromEnum(pname), params);
+    loader.context.get_query_iv(@backingInt(target), @backingInt(pname), params);
 }

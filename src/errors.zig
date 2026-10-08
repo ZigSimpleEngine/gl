@@ -19,5 +19,5 @@ const enums = @import("enums.zig");
 /// if (err != .no_error) { log("GL error: {s}", .{@tagName(err)}); }
 /// ```
 pub fn getError() enums.ErrorCode {
-    return @enumFromInt(loader.context.getError());
+    return @fromBackingInt(@intCast(loader.context.getError()));
 }

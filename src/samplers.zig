@@ -46,38 +46,38 @@ pub fn bind(unit: u32, sampler: u32) void {
 /// `glSamplerParameteri`).
 ///
 /// ```
-/// gl.samplers.parameterI(sampler, .texture_min_filter, @intFromEnum(.linear_mipmap_linear));
+/// gl.samplers.parameterI(sampler, .texture_min_filter, @backingInt(.linear_mipmap_linear));
 /// ```
 pub fn parameterI(sampler: u32, pname: SamplerParameter, param: i32) void {
-    loader.context.sampler_parameter_i(sampler, @intFromEnum(pname), param);
+    loader.context.sampler_parameter_i(sampler, @backingInt(pname), param);
 }
 
 /// Sets a floating-point parameter of the sampler (port of
 /// `glSamplerParameterf`).
 pub fn parameterF(sampler: u32, pname: SamplerParameter, param: f32) void {
-    loader.context.sampler_parameter_f(sampler, @intFromEnum(pname), param);
+    loader.context.sampler_parameter_f(sampler, @backingInt(pname), param);
 }
 
 /// Sets an array of integer parameters of the sampler (port of
 /// `glSamplerParameteriv`).
 pub fn parameterIv(sampler: u32, pname: SamplerParameter, param: [*]const i32) void {
-    loader.context.sampler_parameter_iv(sampler, @intFromEnum(pname), param);
+    loader.context.sampler_parameter_iv(sampler, @backingInt(pname), param);
 }
 
 /// Sets an array of floating-point parameters of the sampler (port of
 /// `glSamplerParameterfv`).
 pub fn parameterFv(sampler: u32, pname: SamplerParameter, param: [*]const f32) void {
-    loader.context.sampler_parameter_fv(sampler, @intFromEnum(pname), param);
+    loader.context.sampler_parameter_fv(sampler, @backingInt(pname), param);
 }
 
 /// Reads an integer-valued parameter of the sampler (port of
 /// `glGetSamplerParameteriv`).
 pub fn getParameterI(sampler: u32, pname: SamplerParameter, params: [*]i32) void {
-    loader.context.get_sampler_parameter_iv(sampler, @intFromEnum(pname), params);
+    loader.context.get_sampler_parameter_iv(sampler, @backingInt(pname), params);
 }
 
 /// Reads a floating-point parameter of the sampler (port of
 /// `glGetSamplerParameterfv`).
 pub fn getParameterF(sampler: u32, pname: SamplerParameter, params: [*]f32) void {
-    loader.context.get_sampler_parameter_fv(sampler, @intFromEnum(pname), params);
+    loader.context.get_sampler_parameter_fv(sampler, @backingInt(pname), params);
 }

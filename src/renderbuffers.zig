@@ -68,7 +68,7 @@ pub fn isRenderbuffer(renderbuffer: u32) bool {
 
 /// Binds the renderbuffer to its binding point (port of `glBindRenderbuffer`).
 pub fn bind(target: RenderbufferTarget, renderbuffer: u32) void {
-    loader.context.bind_renderbuffer(@intFromEnum(target), renderbuffer);
+    loader.context.bind_renderbuffer(@backingInt(target), renderbuffer);
 }
 
 /// Allocates the storage of the bound renderbuffer (port of
@@ -88,8 +88,8 @@ pub fn storage(
     height: i32,
 ) void {
     loader.context.renderbuffer_storage(
-        @intFromEnum(target),
-        @intFromEnum(internalformat),
+        @backingInt(target),
+        @backingInt(internalformat),
         width,
         height,
     );
@@ -109,9 +109,9 @@ pub fn storageMultisample(
     height: i32,
 ) void {
     loader.context.renderbuffer_storage_multisample(
-        @intFromEnum(target),
+        @backingInt(target),
         samples,
-        @intFromEnum(internalformat),
+        @backingInt(internalformat),
         width,
         height,
     );
@@ -120,5 +120,5 @@ pub fn storageMultisample(
 /// Reads a parameter of the bound renderbuffer (port of
 /// `glGetRenderbufferParameteriv`).
 pub fn getParameter(target: RenderbufferTarget, pname: RenderbufferParameter, params: [*]i32) void {
-    loader.context.get_renderbuffer_parameter_iv(@intFromEnum(target), @intFromEnum(pname), params);
+    loader.context.get_renderbuffer_parameter_iv(@backingInt(target), @backingInt(pname), params);
 }

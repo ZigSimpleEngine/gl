@@ -18,7 +18,7 @@ const enums = @import("enums.zig");
 /// gl.depth.depthFunc(.lequal);
 /// ```
 pub fn depthFunc(func: enums.Comparison) void {
-    loader.context.depthFunc(@intFromEnum(func));
+    loader.context.depthFunc(@backingInt(func));
 }
 
 /// Enables or disables writes to the depth buffer (port of `glDepthMask`).

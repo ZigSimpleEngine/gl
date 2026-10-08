@@ -222,7 +222,7 @@ fn readInteger64Value(parameter: state.GetPName) i64 {
 fn readEnumValue(comptime Result: type, parameter: state.GetPName) Result {
     var storage: [4]i32 = .{ 0, 0, 0, 0 };
     state.getInteger(parameter, &storage);
-    return @enumFromInt(@as(u32, @bitCast(storage[0])));
+    return @fromBackingInt(@intCast(@as(u32, @bitCast(storage[0]))));
 }
 
 // ---------------------------------------------------------------------------
@@ -662,11 +662,11 @@ pub fn getPolygonOffsetUnits() f32 {
 /// `index` selects the output color number (0–15). The initial value of index
 /// 0 is `GL_BACK`; all other outputs start as `GL_NONE`.
 pub fn getDrawBuffer(index: u32) DrawBuffer {
-    const base: u32 = @intFromEnum(state.GetPName.draw_buffer0);
-    const parameter: state.GetPName = @enumFromInt(base + index);
+    const base: u32 = @backingInt(state.GetPName.draw_buffer0);
+    const parameter: state.GetPName = @fromBackingInt(@intCast(base + index));
     var storage: [4]i32 = .{ 0, 0, 0, 0 };
     state.getInteger(parameter, &storage);
-    return @enumFromInt(@as(u32, @bitCast(storage[0])));
+    return @fromBackingInt(@intCast(@as(u32, @bitCast(storage[0]))));
 }
 
 // ---------------------------------------------------------------------------
@@ -1296,27 +1296,27 @@ pub fn getExtensionList(allocator: Allocator) ![]?[:0]const u8 {
 /// or `GL_UNIFORM_BUFFER_BINDING`; `index` selects the indexed binding point.
 pub fn getIndexedInteger(target: BufferTarget, index: u32) i32 {
     var storage: [4]i32 = .{ 0, 0, 0, 0 };
-    state.getIntegerI(@intFromEnum(target), index, &storage);
+    state.getIntegerI(@backingInt(target), index, &storage);
     return storage[0];
 }
 
 /// Indexed 64-bit integer query: port of `glGetInteger64i_v`.
 pub fn getIndexedInteger64(target: BufferTarget, index: u32) i64 {
     var storage: [4]i64 = .{ 0, 0, 0, 0 };
-    state.getInteger64I(@intFromEnum(target), index, &storage);
+    state.getInteger64I(@backingInt(target), index, &storage);
     return storage[0];
 }
 
 /// Indexed uniform buffer binding at the given binding point.
 pub fn getIndexedUniformBufferBinding(index: u32) u32 {
     var storage: [4]i32 = .{ 0, 0, 0, 0 };
-    state.getIntegerI(@intFromEnum(BufferTarget.uniform_buffer), index, &storage);
+    state.getIntegerI(@backingInt(BufferTarget.uniform_buffer), index, &storage);
     return @bitCast(storage[0]);
 }
 
 /// Indexed transform feedback buffer binding at the given binding point.
 pub fn getIndexedTransformFeedbackBufferBinding(index: u32) u32 {
     var storage: [4]i32 = .{ 0, 0, 0, 0 };
-    state.getIntegerI(@intFromEnum(BufferTarget.transform_feedback_buffer), index, &storage);
+    state.getIntegerI(@backingInt(BufferTarget.transform_feedback_buffer), index, &storage);
     return @bitCast(storage[0]);
 }

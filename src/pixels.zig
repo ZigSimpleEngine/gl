@@ -54,7 +54,7 @@ pub const PixelStoreParameter = enum(u32) {
 /// gl.pixels.storeI(.unpack_alignment, 1);
 /// ```
 pub fn storeI(pname: PixelStoreParameter, param: i32) void {
-    loader.context.pixel_store_i(@intFromEnum(pname), param);
+    loader.context.pixel_store_i(@backingInt(pname), param);
 }
 
 /// Selects the buffer read by [`readPixels`](readPixels)
@@ -63,7 +63,7 @@ pub fn storeI(pname: PixelStoreParameter, param: i32) void {
 /// On the default framebuffer, `GL_BACK` and `GL_COLOR` both select the
 /// color buffer; on a framebuffer object only `GL_COLOR` is valid.
 pub fn readBuffer(src: ReadBuffer) void {
-    loader.context.readBuffer(@intFromEnum(src));
+    loader.context.readBuffer(@backingInt(src));
 }
 
 /// Buffer selectable as the read source of [`readPixels`](readPixels).
@@ -100,5 +100,5 @@ pub fn readPixels(
     kind: enums.DataType,
     pixels: ?*anyopaque,
 ) void {
-    loader.context.readPixels(x, y, width, height, @intFromEnum(format), @intFromEnum(kind), pixels);
+    loader.context.readPixels(x, y, width, height, @backingInt(format), @backingInt(kind), pixels);
 }

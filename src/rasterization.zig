@@ -28,13 +28,13 @@ pub const FrontFaceDirection = enum(u32) {
 /// gl.rasterization.cullFace(.back);
 /// ```
 pub fn cullFace(mode: enums.Face) void {
-    loader.context.cullFace(@intFromEnum(mode));
+    loader.context.cullFace(@backingInt(mode));
 }
 
 /// Sets the winding order that classifies a polygon as front-facing
 /// (port of `glFrontFace`).
 pub fn frontFace(mode: FrontFaceDirection) void {
-    loader.context.frontFace(@intFromEnum(mode));
+    loader.context.frontFace(@backingInt(mode));
 }
 
 /// Sets the width of rasterized lines in pixels (port of `glLineWidth`).

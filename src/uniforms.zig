@@ -149,7 +149,7 @@ pub fn getIndices(program: u32, names: []const [*:0]const u8, indices: [*]u32) v
 /// [`getActiveUniform`](getActiveUniform); the value of `pname` for each
 /// index is written into `params`.
 pub fn getActiveUniforms(program: u32, indices: []const u32, pname: UniformParameter, params: [*]i32) void {
-    loader.context.get_active_uniforms_iv(program, @intCast(indices.len), indices.ptr, @intFromEnum(pname), params);
+    loader.context.get_active_uniforms_iv(program, @intCast(indices.len), indices.ptr, @backingInt(pname), params);
 }
 
 /// Returns the name of the uniform block `blockIndex` (port of
@@ -171,7 +171,7 @@ pub fn getActiveUniformBlockName(program: u32, index: u32, name_buf: []u8) usize
 /// Reads a parameter of the uniform block `blockIndex` (port of
 /// `glGetActiveUniformBlockiv`).
 pub fn getActiveUniformBlock(program: u32, index: u32, pname: UniformBlockParameter, params: [*]i32) void {
-    loader.context.get_active_uniform_block_iv(program, index, @intFromEnum(pname), params);
+    loader.context.get_active_uniform_block_iv(program, index, @backingInt(pname), params);
 }
 
 /// Reads the current values of the uniform at `location` as floats (port of

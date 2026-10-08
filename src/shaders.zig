@@ -68,7 +68,7 @@ pub const PrecisionType = enum(u32) {
 /// defer gl.shaders.delete(shader);
 /// ```
 pub fn create(kind: ShaderType) u32 {
-    return loader.context.create_shader(@intFromEnum(kind));
+    return loader.context.create_shader(@backingInt(kind));
 }
 
 /// Deletes the shader (port of `glDeleteShader`).
@@ -113,7 +113,7 @@ pub fn compile(shader: u32) void {
 
 /// Reads a parameter of the shader (port of `glGetShaderiv`).
 pub fn getParameter(shader: u32, pname: ShaderParameter, params: [*]i32) void {
-    loader.context.get_shader_iv(shader, @intFromEnum(pname), params);
+    loader.context.get_shader_iv(shader, @backingInt(pname), params);
 }
 
 /// Retrieves the compilation log of the shader into `buf` (port of
@@ -155,8 +155,8 @@ pub fn getPrecisionFormat(
     precision: ?*i32,
 ) void {
     loader.context.get_shader_precision_format(
-        @intFromEnum(shader_type),
-        @intFromEnum(precision_type),
+        @backingInt(shader_type),
+        @backingInt(precision_type),
         range,
         precision,
     );

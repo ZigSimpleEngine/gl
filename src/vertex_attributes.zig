@@ -91,7 +91,7 @@ pub fn pointer(
     stride: i32,
     ptr: ?*const anyopaque,
 ) void {
-    loader.context.vertex_attrib_pointer(index, size, @intFromEnum(kind), @intFromBool(normalized), stride, ptr);
+    loader.context.vertex_attrib_pointer(index, size, @backingInt(kind), @intFromBool(normalized), stride, ptr);
 }
 
 /// Configures a pure-integer attribute (port of `glVertexAttribIPointer`).
@@ -99,7 +99,7 @@ pub fn pointer(
 /// Same as [`pointer`](pointer) but without normalization: the values are
 /// passed to the shader as integers.
 pub fn iPointer(index: u32, size: i32, kind: enums.DataType, stride: i32, ptr: ?*const anyopaque) void {
-    loader.context.vertex_attrib_i_pointer(index, size, @intFromEnum(kind), stride, ptr);
+    loader.context.vertex_attrib_i_pointer(index, size, @backingInt(kind), stride, ptr);
 }
 
 /// Sets the instance divisor of the attribute (port of
@@ -190,29 +190,29 @@ pub fn vertexAttribI4uiv(index: u32, v: [*]const u32) void {
 /// Reads a floating-point-valued parameter of the attribute (port of
 /// `glGetVertexAttribfv`).
 pub fn get(index: u32, pname: VertexAttribParameter, params: [*]f32) void {
-    loader.context.get_vertex_attrib_fv(index, @intFromEnum(pname), params);
+    loader.context.get_vertex_attrib_fv(index, @backingInt(pname), params);
 }
 
 /// Reads an integer-valued parameter of the attribute (port of
 /// `glGetVertexAttribiv`).
 pub fn getI(index: u32, pname: VertexAttribParameter, params: [*]i32) void {
-    loader.context.get_vertex_attrib_iv(index, @intFromEnum(pname), params);
+    loader.context.get_vertex_attrib_iv(index, @backingInt(pname), params);
 }
 
 /// Reads an unsigned integer-valued parameter of the attribute
 /// (port of `glGetVertexAttribIuiv`).
 pub fn getIU(index: u32, pname: VertexAttribParameter, params: [*]u32) void {
-    loader.context.get_vertex_attrib_i_uiv(index, @intFromEnum(pname), params);
+    loader.context.get_vertex_attrib_i_uiv(index, @backingInt(pname), params);
 }
 
 /// Reads a signed integer-valued parameter of a pure-integer attribute
 /// (port of `glGetVertexAttribIiv`).
 pub fn getIS(index: u32, pname: VertexAttribParameter, params: [*]i32) void {
-    loader.context.get_vertex_attrib_i_iv(index, @intFromEnum(pname), params);
+    loader.context.get_vertex_attrib_i_iv(index, @backingInt(pname), params);
 }
 
 /// Reads the data pointer configured by [`pointer`](pointer) (port of
 /// `glGetVertexAttribPointerv`).
 pub fn getPointer(index: u32, pname: VertexAttribParameter, ptr: ?*?*anyopaque) void {
-    loader.context.get_vertex_attrib_pointer_v(index, @intFromEnum(pname), ptr);
+    loader.context.get_vertex_attrib_pointer_v(index, @backingInt(pname), ptr);
 }

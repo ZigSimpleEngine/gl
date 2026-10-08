@@ -37,7 +37,7 @@ pub const PrimitiveType = enum(u32) {
 /// Draws `count` primitives of the given type, reading vertices sequentially
 /// from the bound attribute arrays (port of `glDrawArrays`).
 pub fn drawArrays(mode: PrimitiveType, first: i32, count: i32) void {
-    loader.context.drawArrays(@intFromEnum(mode), first, count);
+    loader.context.drawArrays(@backingInt(mode), first, count);
 }
 
 /// Draws `count` primitives, repeated `instance_count` times (port of
@@ -46,7 +46,7 @@ pub fn drawArrays(mode: PrimitiveType, first: i32, count: i32) void {
 /// The per-instance attributes must be set up with
 /// [`vertex_attributes.divisor`](vertex_attributes.divisor).
 pub fn drawArraysInstanced(mode: PrimitiveType, first: i32, count: i32, instance_count: i32) void {
-    loader.context.drawArraysInstanced(@intFromEnum(mode), first, count, instance_count);
+    loader.context.drawArraysInstanced(@backingInt(mode), first, count, instance_count);
 }
 
 /// Draws indexed primitives (port of `glDrawElements`).
@@ -61,7 +61,7 @@ pub fn drawArraysInstanced(mode: PrimitiveType, first: i32, count: i32, instance
 /// gl.drawing.drawElements(.triangles, 6, .unsigned_short, null);
 /// ```
 pub fn drawElements(mode: PrimitiveType, count: i32, kind: enums.DataType, indices: ?*const anyopaque) void {
-    loader.context.drawElements(@intFromEnum(mode), count, @intFromEnum(kind), indices);
+    loader.context.drawElements(@backingInt(mode), count, @backingInt(kind), indices);
 }
 
 /// Draws indexed primitives, repeated `instance_count` times (port of
@@ -73,7 +73,7 @@ pub fn drawElementsInstanced(
     indices: ?*const anyopaque,
     instance_count: i32,
 ) void {
-    loader.context.drawElementsInstanced(@intFromEnum(mode), count, @intFromEnum(kind), indices, instance_count);
+    loader.context.drawElementsInstanced(@backingInt(mode), count, @backingInt(kind), indices, instance_count);
 }
 
 /// Draws indexed primitives restricted to the index range `[start, end]`
@@ -89,5 +89,5 @@ pub fn drawRangeElements(
     kind: enums.DataType,
     indices: ?*const anyopaque,
 ) void {
-    loader.context.drawRangeElements(@intFromEnum(mode), start, end, count, @intFromEnum(kind), indices);
+    loader.context.drawRangeElements(@backingInt(mode), start, end, count, @backingInt(kind), indices);
 }

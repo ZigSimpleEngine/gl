@@ -65,7 +65,7 @@ pub fn bind(id: u32) void {
 /// gl.transform_feedback.end();
 /// ```
 pub fn begin(mode: drawing.PrimitiveType) void {
-    loader.context.begin_transform_feedback(@intFromEnum(mode));
+    loader.context.begin_transform_feedback(@backingInt(mode));
 }
 
 /// Stops capturing transform feedback (port of `glEndTransformFeedback`).
@@ -94,7 +94,7 @@ pub fn resumeCapture() void {
 /// determined by `mode`. Must be called before
 /// [`programs.link`](programs.link).
 pub fn varyings(program: u32, names: []const [*:0]const u8, mode: BufferMode) void {
-    loader.context.transform_feedback_varyings(program, @intCast(names.len), names.ptr, @intFromEnum(mode));
+    loader.context.transform_feedback_varyings(program, @intCast(names.len), names.ptr, @backingInt(mode));
 }
 
 /// Queries the info of the captured varying at `index` (port of

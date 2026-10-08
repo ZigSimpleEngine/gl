@@ -2,7 +2,7 @@
     .name = .gl,
     .version = "0.0.3",
     .fingerprint = 0x2f61c2eca2838983,
-    .minimum_zig_version = "0.16.0",
+    .minimum_zig_version = "0.17.0",
 
     .dependencies = .{
         // Optional, test-only: local rgfw checkout used to open a real GPU

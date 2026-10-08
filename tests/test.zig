@@ -162,10 +162,10 @@ test "buffers, textures, samplers, pixels" {
     try std.testing.expect(!gl.textures.isTexture(0));
     // NOTE: SubImage uploads require real client memory: unlike Image
     // calls, a null pointer means byte offset 0 and dereferences address 0.
-    var rgbaPixels = [_]u8{0} ** 64;
-    var volumePixels = [_]u8{0} ** 256;
-    var etcPixels = [_]u8{0} ** 8;
-    var etcArrayPixels = [_]u8{0} ** 32;
+    var rgbaPixels: [64]u8 = @splat(0);
+    var volumePixels: [256]u8 = @splat(0);
+    var etcPixels: [8]u8 = @splat(0);
+    var etcArrayPixels: [32]u8 = @splat(0);
     gl.textures.image2d(
         gl.textures.TextureTarget.texture_2d,
         0,
@@ -194,18 +194,18 @@ test "buffers, textures, samplers, pixels" {
     gl.textures.parameterI(
         gl.textures.TextureTarget.texture_2d,
         gl.textures.TextureParameter.texture_min_filter,
-        @intCast(@intFromEnum(gl.textures.TextureMinFilter.nearest)),
+        @intCast(@backingInt(gl.textures.TextureMinFilter.nearest)),
     );
     gl.textures.parameterF(gl.textures.TextureTarget.texture_2d, gl.textures.TextureParameter.texture_max_lod, 0.0);
     gl.textures.parameterIv(
         gl.textures.TextureTarget.texture_2d,
         gl.textures.TextureParameter.texture_min_filter,
-        &.{@intCast(@intFromEnum(gl.textures.TextureMinFilter.nearest))},
+        &.{@intCast(@backingInt(gl.textures.TextureMinFilter.nearest))},
     );
     gl.textures.parameterFv(gl.textures.TextureTarget.texture_2d, gl.textures.TextureParameter.texture_max_lod, &.{0.0});
     var filterStorage: [1]i32 = undefined;
     gl.textures.getParameterI(gl.textures.TextureTarget.texture_2d, gl.textures.TextureParameter.texture_min_filter, &filterStorage);
-    try std.testing.expectEqual(@as(i32, @intCast(@intFromEnum(gl.textures.TextureMinFilter.nearest))), filterStorage[0]);
+    try std.testing.expectEqual(@as(i32, @intCast(@backingInt(gl.textures.TextureMinFilter.nearest))), filterStorage[0]);
     var lodStorage: [1]f32 = undefined;
     gl.textures.getParameterF(gl.textures.TextureTarget.texture_2d, gl.textures.TextureParameter.texture_max_lod, &lodStorage);
     try std.testing.expectEqual(@as(f32, 0.0), lodStorage[0]);
@@ -321,17 +321,17 @@ test "buffers, textures, samplers, pixels" {
     gl.samplers.parameterI(
         sampler,
         gl.samplers.SamplerParameter.texture_min_filter,
-        @intCast(@intFromEnum(gl.textures.TextureMinFilter.nearest)),
+        @intCast(@backingInt(gl.textures.TextureMinFilter.nearest)),
     );
     gl.samplers.parameterF(sampler, gl.samplers.SamplerParameter.texture_max_lod, 0.0);
     gl.samplers.parameterIv(
         sampler,
         gl.samplers.SamplerParameter.texture_min_filter,
-        &.{@intCast(@intFromEnum(gl.textures.TextureMinFilter.nearest))},
+        &.{@intCast(@backingInt(gl.textures.TextureMinFilter.nearest))},
     );
     gl.samplers.parameterFv(sampler, gl.samplers.SamplerParameter.texture_max_lod, &.{0.0});
     gl.samplers.getParameterI(sampler, gl.samplers.SamplerParameter.texture_min_filter, &filterStorage);
-    try std.testing.expectEqual(@as(i32, @intCast(@intFromEnum(gl.textures.TextureMinFilter.nearest))), filterStorage[0]);
+    try std.testing.expectEqual(@as(i32, @intCast(@backingInt(gl.textures.TextureMinFilter.nearest))), filterStorage[0]);
     gl.samplers.getParameterF(sampler, gl.samplers.SamplerParameter.texture_max_lod, &lodStorage);
     try std.testing.expectEqual(@as(f32, 0.0), lodStorage[0]);
     gl.samplers.bind(0, 0);
@@ -378,7 +378,7 @@ test "framebuffers, renderbuffers" {
     gl.textures.parameterI(
         gl.textures.TextureTarget.texture_2d,
         gl.textures.TextureParameter.texture_min_filter,
-        @intCast(@intFromEnum(gl.textures.TextureMinFilter.nearest)),
+        @intCast(@backingInt(gl.textures.TextureMinFilter.nearest)),
     );
 
     gl.framebuffers.bind(gl.framebuffers.FramebufferTarget.framebuffer, 0);
@@ -423,7 +423,7 @@ test "framebuffers, renderbuffers" {
     gl.textures.parameterI(
         gl.textures.TextureTarget.texture_2d_array,
         gl.textures.TextureParameter.texture_min_filter,
-        @intCast(@intFromEnum(gl.textures.TextureMinFilter.nearest)),
+        @intCast(@backingInt(gl.textures.TextureMinFilter.nearest)),
     );
     gl.framebuffers.bind(gl.framebuffers.FramebufferTarget.framebuffer, framebuffer);
     gl.framebuffers.attachTextureLayer(
@@ -452,11 +452,11 @@ test "framebuffers, renderbuffers" {
     gl.framebuffers.drawBuffers(&.{gl.framebuffers.DrawBuffer.color_attachment0});
     gl.framebuffers.invalidate(
         gl.framebuffers.FramebufferTarget.framebuffer,
-        &.{@intFromEnum(gl.framebuffers.Attachment.color_attachment0)},
+        &.{@backingInt(gl.framebuffers.Attachment.color_attachment0)},
     );
     gl.framebuffers.invalidateSub(
         gl.framebuffers.FramebufferTarget.framebuffer,
-        &.{@intFromEnum(gl.framebuffers.Attachment.color_attachment0)},
+        &.{@backingInt(gl.framebuffers.Attachment.color_attachment0)},
         0,
         0,
         4,
@@ -723,12 +723,12 @@ test "shaders, programs, uniforms" {
     const locMat4x2 = gl.uniforms.location(program, "u_mat4x2");
     const locMat4x3 = gl.uniforms.location(program, "u_mat4x3");
     const uniformLocations = [_]i32{
-        locFloat, locVec2, locVec3, locVec4,
-        locInt,   locIVec2, locIVec3, locIVec4,
-        locUint,  locUVec2, locUVec3, locUVec4,
-        locMat2,  locMat2x3, locMat2x4,
-        locMat3,  locMat3x2, locMat3x4,
-        locMat4,  locMat4x2, locMat4x3,
+        locFloat,  locVec2,   locVec3,   locVec4,
+        locInt,    locIVec2,  locIVec3,  locIVec4,
+        locUint,   locUVec2,  locUVec3,  locUVec4,
+        locMat2,   locMat2x3, locMat2x4, locMat3,
+        locMat3x2, locMat3x4, locMat4,   locMat4x2,
+        locMat4x3,
     };
     for (uniformLocations) |uniformLocation| {
         try std.testing.expect(uniformLocation >= 0);
@@ -751,7 +751,7 @@ test "shaders, programs, uniforms" {
     try std.testing.expect(uniformIndices[1] != std.math.maxInt(u32));
     var uniformTypes: [2]i32 = undefined;
     gl.uniforms.getActiveUniforms(program, uniformIndices[0..], gl.uniforms.UniformParameter.uniform_type, &uniformTypes);
-    try std.testing.expectEqual(@as(i32, @intFromEnum(gl.enums.DataType.float)), uniformTypes[0]);
+    try std.testing.expectEqual(@as(i32, @backingInt(gl.enums.DataType.float)), uniformTypes[0]);
     var readback: [4]f32 = undefined;
     var readbackInt: [4]i32 = undefined;
     var readbackUint: [4]u32 = undefined;

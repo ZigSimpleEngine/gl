@@ -44,7 +44,7 @@ pub const StencilOp = enum(u32) {
 /// The fragment passes the test if `(reference & mask) <func>
 /// (stored_value & mask)` evaluates to `true`.
 pub fn stencilFunc(func: enums.Comparison, reference: i32, mask: u32) void {
-    loader.context.stencilFunc(@intFromEnum(func), reference, mask);
+    loader.context.stencilFunc(@backingInt(func), reference, mask);
 }
 
 /// Sets the comparison function, reference value and value mask for the
@@ -54,7 +54,7 @@ pub fn stencilFunc(func: enums.Comparison, reference: i32, mask: u32) void {
 /// [`enums.Face.back`](enums.Face.back) or
 /// [`enums.Face.front_and_back`](enums.Face.front_and_back).
 pub fn stencilFuncSeparate(face: enums.Face, func: enums.Comparison, reference: i32, mask: u32) void {
-    loader.context.stencilFuncSeparate(@intFromEnum(face), @intFromEnum(func), reference, mask);
+    loader.context.stencilFuncSeparate(@backingInt(face), @backingInt(func), reference, mask);
 }
 
 /// Sets the stencil write mask for both front and back faces
@@ -66,7 +66,7 @@ pub fn stencilMask(mask: u32) void {
 /// Sets the stencil write mask for the given face only
 /// (port of `glStencilMaskSeparate`).
 pub fn stencilMaskSeparate(face: enums.Face, mask: u32) void {
-    loader.context.stencilMaskSeparate(@intFromEnum(face), mask);
+    loader.context.stencilMaskSeparate(@backingInt(face), mask);
 }
 
 /// Sets the actions for all three stencil test outcomes, applied to both
@@ -76,11 +76,11 @@ pub fn stencilMaskSeparate(face: enums.Face, mask: u32) void {
 /// - `z_fail` — the fragment passed the stencil test but failed the depth test;
 /// - `z_pass` — the fragment passed both tests.
 pub fn stencilOp(fail: StencilOp, z_fail: StencilOp, z_pass: StencilOp) void {
-    loader.context.stencilOp(@intFromEnum(fail), @intFromEnum(z_fail), @intFromEnum(z_pass));
+    loader.context.stencilOp(@backingInt(fail), @backingInt(z_fail), @backingInt(z_pass));
 }
 
 /// Sets the actions for all three stencil test outcomes for the given face
 /// only (port of `glStencilOpSeparate`).
 pub fn stencilOpSeparate(face: enums.Face, sfail: StencilOp, dpfail: StencilOp, dppass: StencilOp) void {
-    loader.context.stencilOpSeparate(@intFromEnum(face), @intFromEnum(sfail), @intFromEnum(dpfail), @intFromEnum(dppass));
+    loader.context.stencilOpSeparate(@backingInt(face), @backingInt(sfail), @backingInt(dpfail), @backingInt(dppass));
 }

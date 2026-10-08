@@ -98,19 +98,19 @@ pub fn blendColor(red: f32, green: f32, blue: f32, alpha: f32) void {
 /// Sets the blend equation used for both RGB and alpha components
 /// (port of `glBlendEquation`).
 pub fn blendEquation(mode: BlendEquation) void {
-    loader.context.blendEquation(@intFromEnum(mode));
+    loader.context.blendEquation(@backingInt(mode));
 }
 
 /// Sets the blend equations for RGB and alpha components independently
 /// (port of `glBlendEquationSeparate`).
 pub fn blendEquationSeparate(mode_rgb: BlendEquation, mode_alpha: BlendEquation) void {
-    loader.context.blendEquationSeparate(@intFromEnum(mode_rgb), @intFromEnum(mode_alpha));
+    loader.context.blendEquationSeparate(@backingInt(mode_rgb), @backingInt(mode_alpha));
 }
 
 /// Sets the blend factors used for both RGB and alpha components
 /// (port of `glBlendFunc`).
 pub fn blendFunc(sfactor: BlendFactor, dfactor: BlendFactor) void {
-    loader.context.blendFunc(@intFromEnum(sfactor), @intFromEnum(dfactor));
+    loader.context.blendFunc(@backingInt(sfactor), @backingInt(dfactor));
 }
 
 /// Sets the blend factors for RGB and alpha components independently
@@ -122,9 +122,9 @@ pub fn blendFuncSeparate(
     dfactor_alpha: BlendFactor,
 ) void {
     loader.context.blendFuncSeparate(
-        @intFromEnum(sfactor_rgb),
-        @intFromEnum(dfactor_rgb),
-        @intFromEnum(sfactor_alpha),
-        @intFromEnum(dfactor_alpha),
+        @backingInt(sfactor_rgb),
+        @backingInt(dfactor_rgb),
+        @backingInt(sfactor_alpha),
+        @backingInt(dfactor_alpha),
     );
 }
