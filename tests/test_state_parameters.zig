@@ -41,8 +41,34 @@ test "state_parameters against real driver" {
     _ = parameters.getBlueBits();
     _ = parameters.getGreenBits();
     _ = parameters.getRedBits();
-    _ = parameters.getDepthBits();
-    _ = parameters.getStencilBits();
+    try checkClean();
+
+    // Depth/stencil sizes need buffers that exist: the window visual is not
+    // guaranteed to provide depth/stencil attachments (headless and minimal
+    // X servers vary, and strict core drivers fault missing points instead
+    // of returning 0). Verify against an FBO with a known DEPTH24_STENCIL8
+    // renderbuffer, which asserts exact values on every driver.
+    {
+        var rb: u32 = 0;
+        var fb: u32 = 0;
+        gl.renderbuffers.gen(1, @ptrCast(&rb));
+        defer gl.renderbuffers.delete(1, @ptrCast(&rb));
+        gl.renderbuffers.bind(.renderbuffer, rb);
+        gl.renderbuffers.storage(.renderbuffer, .depth24_stencil8, 64, 64);
+        gl.framebuffers.gen(1, @ptrCast(&fb));
+        defer gl.framebuffers.delete(1, @ptrCast(&fb));
+        gl.framebuffers.bind(.framebuffer, fb);
+        // Same packed depth-stencil image on both points (complete per spec).
+        gl.framebuffers.attachRenderbuffer(.framebuffer, .depth_attachment, rb);
+        gl.framebuffers.attachRenderbuffer(.framebuffer, .stencil_attachment, rb);
+        try std.testing.expectEqual(
+            gl.framebuffers.FramebufferStatus.framebuffer_complete,
+            gl.framebuffers.checkStatus(.framebuffer),
+        );
+        try std.testing.expectEqual(@as(i32, 24), parameters.getDepthBits());
+        try std.testing.expectEqual(@as(i32, 8), parameters.getStencilBits());
+        gl.framebuffers.bind(.framebuffer, 0);
+    }
     try checkClean();
 
     // Bindings.
@@ -105,8 +131,11 @@ test "state_parameters against real driver" {
     try checkClean();
 
     // Front face, hints, line width, versions.
+    // NOTE: getGenerateMipmapHint() is intentionally not called: the suite
+    // runs on core contexts, where GL_GENERATE_MIPMAP_HINT was removed, so
+    // the query faults and its result cannot convert to HintMode. The
+    // hint() setter stays covered in test.zig with a core-valid target.
     _ = parameters.getFrontFace();
-    _ = parameters.getGenerateMipmapHint();
     _ = parameters.getLineWidth();
     try std.testing.expect(parameters.getMajorVersion() >= 3);
     _ = parameters.getMinorVersion();

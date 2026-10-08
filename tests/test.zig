@@ -45,7 +45,10 @@ test "state, viewport, clear, blending, depth, stencil, rasterization, drawing" 
     gl.state.getFloat(gl.state.GetPName.color_clear_value, &fv);
     try std.testing.expect(gl.state.getString(gl.state.StringName.version) != null);
     try std.testing.expect(gl.state.getStringI(gl.state.StringName.extensions, 0) != null);
-    gl.state.hint(gl.state.HintTarget.generateMipmap, gl.state.HintMode.nicest);
+    // NOTE: generateMipmap hint (GL_GENERATE_MIPMAP_HINT) was removed from
+    // core profiles and raises INVALID_ENUM on strict core drivers; use a
+    // core-valid hint target here so the hint() wrapper stays covered.
+    gl.state.hint(gl.state.HintTarget.fragment_shader_derivative, gl.state.HintMode.nicest);
     gl.state.finish();
     gl.state.flush();
 

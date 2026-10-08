@@ -257,40 +257,51 @@ pub fn getAliasedPointSizeRange() FloatRange {
 // Framebuffer bit depths.
 // ---------------------------------------------------------------------------
 
-/// Number of alpha bitplanes in the color buffer: `GL_ALPHA_BITS`
-/// (`glGetIntegerv`, 1 × integer).
+/// Reads one integer attachment parameter of the framebuffer bound to
+/// `GL_DRAW_FRAMEBUFFER` (port of `glGetFramebufferAttachmentParameteriv`,
+/// 1 × integer). This is the core-profile-safe replacement for the removed
+/// `GL_*_BITS` `glGetIntegerv` queries, which raise `GL_INVALID_ENUM` on
+/// strict core drivers (e.g. NVIDIA).
+fn readAttachmentSize(attachment: framebuffers.Attachment, parameter: framebuffers.AttachmentParameter) i32 {
+    var storage: [4]i32 = .{ 0, 0, 0, 0 };
+    framebuffers.getAttachmentParameter(.draw_framebuffer, attachment, parameter, &storage);
+    return storage[0];
+}
+
+/// Number of alpha bitplanes in the color buffer of the bound draw
+/// framebuffer (`GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE` on `GL_BACK_LEFT`).
 pub fn getAlphaBits() i32 {
-    return readIntegerValue(.alpha_bits);
+    return readAttachmentSize(.back_left, .attachment_alpha_size);
 }
 
-/// Number of blue bitplanes in the color buffer: `GL_BLUE_BITS`
-/// (`glGetIntegerv`, 1 × integer).
+/// Number of blue bitplanes in the color buffer of the bound draw
+/// framebuffer (`GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE` on `GL_BACK_LEFT`).
 pub fn getBlueBits() i32 {
-    return readIntegerValue(.blue_bits);
+    return readAttachmentSize(.back_left, .attachment_blue_size);
 }
 
-/// Number of green bitplanes in the color buffer: `GL_GREEN_BITS`
-/// (`glGetIntegerv`, 1 × integer).
+/// Number of green bitplanes in the color buffer of the bound draw
+/// framebuffer (`GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE` on `GL_BACK_LEFT`).
 pub fn getGreenBits() i32 {
-    return readIntegerValue(.green_bits);
+    return readAttachmentSize(.back_left, .attachment_green_size);
 }
 
-/// Number of red bitplanes in the color buffer: `GL_RED_BITS`
-/// (`glGetIntegerv`, 1 × integer).
+/// Number of red bitplanes in the color buffer of the bound draw
+/// framebuffer (`GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE` on `GL_BACK_LEFT`).
 pub fn getRedBits() i32 {
-    return readIntegerValue(.red_bits);
+    return readAttachmentSize(.back_left, .attachment_red_size);
 }
 
-/// Number of bitplanes in the depth buffer: `GL_DEPTH_BITS`
-/// (`glGetIntegerv`, 1 × integer).
+/// Number of bitplanes in the depth buffer of the bound draw framebuffer
+/// (`GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE` on `GL_DEPTH_ATTACHMENT`).
 pub fn getDepthBits() i32 {
-    return readIntegerValue(.depth_bits);
+    return readAttachmentSize(.depth_attachment, .attachment_depth_size);
 }
 
-/// Number of bitplanes in the stencil buffer: `GL_STENCIL_BITS`
-/// (`glGetIntegerv`, 1 × integer).
+/// Number of bitplanes in the stencil buffer of the bound draw framebuffer
+/// (`GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE` on `GL_STENCIL_ATTACHMENT`).
 pub fn getStencilBits() i32 {
-    return readIntegerValue(.stencil_bits);
+    return readAttachmentSize(.stencil_attachment, .attachment_stencil_size);
 }
 
 // ---------------------------------------------------------------------------

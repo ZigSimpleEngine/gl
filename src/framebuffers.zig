@@ -25,7 +25,12 @@ pub const FramebufferTarget = enum(u32) {
 
 /// A color attachment point of a framebuffer, plus the depth and stencil
 /// attachment points (`GL_COLOR_ATTACHMENT0`, `GL_DEPTH_ATTACHMENT`, ...).
+/// `back_left` addresses the color buffer of the default framebuffer, which
+/// has no `GL_COLOR_ATTACHMENTi` points (core-profile-safe queries use it).
 pub const Attachment = enum(u32) {
+    /// Color buffer of the default framebuffer (`GL_BACK_LEFT`).
+    back_left = 0x0402,
+
     /// First color attachment (`GL_COLOR_ATTACHMENT0`).
     color_attachment0 = 0x8CE0,
 
@@ -131,6 +136,24 @@ pub const AttachmentParameter = enum(u32) {
     /// Texture layer of the attached texture
     /// (`GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER`).
     framebuffer_attachment_texture_layer = 0x8CD4,
+
+    /// Bit depth of the red channel (`GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE`).
+    attachment_red_size = 0x8212,
+
+    /// Bit depth of the green channel (`GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE`).
+    attachment_green_size = 0x8213,
+
+    /// Bit depth of the blue channel (`GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE`).
+    attachment_blue_size = 0x8214,
+
+    /// Bit depth of the alpha channel (`GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE`).
+    attachment_alpha_size = 0x8215,
+
+    /// Bit depth of the depth buffer (`GL_FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE`).
+    attachment_depth_size = 0x8216,
+
+    /// Bit depth of the stencil buffer (`GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE`).
+    attachment_stencil_size = 0x8217,
 };
 
 /// Type of the object attached to a framebuffer attachment point.
